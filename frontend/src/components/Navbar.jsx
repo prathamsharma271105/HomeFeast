@@ -406,9 +406,10 @@ export const Navbar = ({ activePage, setActivePage }) => {
                             markNotificationRead(n.id);
                             if (n.actionUrl) {
                               const target = n.actionUrl.replace('#', '');
-                              if (target === 'my-pass' || target === 'orders') setActivePage('my-pass');
-                              if (target === 'admin' || target === 'admin-providers' || target === 'admin-complaints') setActivePage('admin');
-                              if (target === 'provider-dashboard' || target === 'provider-orders') setActivePage('provider-portal');
+                              if (target === 'my-pass' || target === 'orders' || target === 'passes') setActivePage('my-pass');
+                              else if (target === 'admin' || target === 'admin-providers' || target === 'admin-complaints') setActivePage('admin');
+                              else if (target === 'provider-dashboard' || target === 'provider-orders' || target === 'provider-portal' || target === 'subscriptions' || target === 'reviews') setActivePage('provider-portal');
+                              else if (target === 'rider-portal' || target === 'rider-tasks' || target === 'fleet') setActivePage('rider-portal');
                             }
                             setIsNotiOpen(false);
                           }}

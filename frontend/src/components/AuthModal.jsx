@@ -76,6 +76,18 @@ export const AuthModal = () => {
       if (res.success && userObj) {
         loginUser(userObj);
         addToast(`Welcome back, ${userObj.name}! 🍲`, 'success');
+        
+        // Instant routing to the correct portal
+        const targetRole = (userObj.role || role || 'CUSTOMER').toUpperCase();
+        if (targetRole === 'PROVIDER') {
+          window.location.hash = '#provider-portal';
+        } else if (targetRole === 'RIDER') {
+          window.location.hash = '#rider-portal';
+        } else if (targetRole === 'ADMIN') {
+          window.location.hash = '#admin';
+        } else {
+          window.location.hash = '#my-pass';
+        }
       } else {
         addToast(res.message || 'Invalid credentials.', 'error');
       }
@@ -116,6 +128,18 @@ export const AuthModal = () => {
       if (res.success && userObj) {
         loginUser(userObj);
         addToast(res.message || 'Registration successful!', 'success');
+
+        // Instant routing to the correct portal
+        const targetRole = (userObj.role || role || 'CUSTOMER').toUpperCase();
+        if (targetRole === 'PROVIDER') {
+          window.location.hash = '#provider-portal';
+        } else if (targetRole === 'RIDER') {
+          window.location.hash = '#rider-portal';
+        } else if (targetRole === 'ADMIN') {
+          window.location.hash = '#admin';
+        } else {
+          window.location.hash = '#my-pass';
+        }
       } else {
         addToast(res.message || 'Registration failed.', 'error');
       }
@@ -239,31 +263,32 @@ export const AuthModal = () => {
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
           {activeTab === 'login' ? (
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Sign In As Role Selector */}
+              {/* Sign In As Role Selector (Customer, Cook, Rider Only) */}
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#1C1917', marginBottom: '8px' }}>
                   Sign in as:
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => setRole('CUSTOMER')}
                     style={{
-                      padding: '8px 4px',
-                      borderRadius: '10px',
+                      padding: '10px 8px',
+                      borderRadius: '12px',
                       border: role === 'CUSTOMER' ? '2px solid #E8590C' : '1.5px solid #EAE3D9',
                       background: role === 'CUSTOMER' ? '#FFF4E6' : '#FFFFFF',
                       color: role === 'CUSTOMER' ? '#E8590C' : '#57534E',
-                      fontWeight: 700,
-                      fontSize: '11.5px',
+                      fontWeight: 800,
+                      fontSize: '13px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
-                      cursor: 'pointer'
+                      gap: '6px',
+                      cursor: 'pointer',
+                      boxShadow: role === 'CUSTOMER' ? '0 2px 8px rgba(232, 89, 12, 0.15)' : 'none'
                     }}
                   >
-                    <User size={14} />
+                    <User size={16} />
                     <span>Customer</span>
                   </button>
 
@@ -271,21 +296,22 @@ export const AuthModal = () => {
                     type="button"
                     onClick={() => setRole('PROVIDER')}
                     style={{
-                      padding: '8px 4px',
-                      borderRadius: '10px',
+                      padding: '10px 8px',
+                      borderRadius: '12px',
                       border: role === 'PROVIDER' ? '2px solid #2B8A3E' : '1.5px solid #EAE3D9',
                       background: role === 'PROVIDER' ? '#EBFBEE' : '#FFFFFF',
                       color: role === 'PROVIDER' ? '#2B8A3E' : '#57534E',
-                      fontWeight: 700,
-                      fontSize: '11.5px',
+                      fontWeight: 800,
+                      fontSize: '13px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
-                      cursor: 'pointer'
+                      gap: '6px',
+                      cursor: 'pointer',
+                      boxShadow: role === 'PROVIDER' ? '0 2px 8px rgba(43, 138, 62, 0.15)' : 'none'
                     }}
                   >
-                    <ChefHat size={14} />
+                    <ChefHat size={16} />
                     <span>Cook</span>
                   </button>
 
@@ -293,44 +319,23 @@ export const AuthModal = () => {
                     type="button"
                     onClick={() => setRole('RIDER')}
                     style={{
-                      padding: '8px 4px',
-                      borderRadius: '10px',
+                      padding: '10px 8px',
+                      borderRadius: '12px',
                       border: role === 'RIDER' ? '2px solid #D9480F' : '1.5px solid #EAE3D9',
                       background: role === 'RIDER' ? '#FFF4E6' : '#FFFFFF',
                       color: role === 'RIDER' ? '#D9480F' : '#57534E',
-                      fontWeight: 700,
-                      fontSize: '11.5px',
+                      fontWeight: 800,
+                      fontSize: '13px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '4px',
-                      cursor: 'pointer'
+                      gap: '6px',
+                      cursor: 'pointer',
+                      boxShadow: role === 'RIDER' ? '0 2px 8px rgba(217, 72, 15, 0.15)' : 'none'
                     }}
                   >
-                    <Bike size={14} />
+                    <Bike size={16} />
                     <span>Rider</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setRole('ADMIN')}
-                    style={{
-                      padding: '8px 4px',
-                      borderRadius: '10px',
-                      border: role === 'ADMIN' ? '2px solid #4F46E5' : '1.5px solid #EAE3D9',
-                      background: role === 'ADMIN' ? '#EEF2FF' : '#FFFFFF',
-                      color: role === 'ADMIN' ? '#4F46E5' : '#57534E',
-                      fontWeight: 700,
-                      fontSize: '11.5px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <ShieldCheck size={14} />
-                    <span>Admin</span>
                   </button>
                 </div>
               </div>
@@ -344,7 +349,13 @@ export const AuthModal = () => {
                     type="text"
                     value={loginIdentifier}
                     onChange={e => setLoginIdentifier(e.target.value)}
-                    placeholder={role === 'PROVIDER' ? 'e.g. manisha@gmail.com' : role === 'RIDER' ? 'e.g. raju@gmail.com' : 'e.g. customer@homefeast.test or 98290 20001'}
+                    placeholder={
+                      role === 'PROVIDER'
+                        ? 'e.g. manisha@gmail.com or sunita.agarwal@example.com'
+                        : role === 'RIDER'
+                        ? 'e.g. raju@gmail.com or vikas.saini@example.com'
+                        : 'e.g. customer@homefeast.test or 98290 12345'
+                    }
                     required
                     style={{
                       width: '100%',

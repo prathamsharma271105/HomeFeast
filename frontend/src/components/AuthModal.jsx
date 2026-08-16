@@ -351,9 +351,9 @@ export const AuthModal = () => {
                     onChange={e => setLoginIdentifier(e.target.value)}
                     placeholder={
                       role === 'PROVIDER'
-                        ? 'e.g. manisha@gmail.com or sunita.agarwal@example.com'
+                        ? 'e.g. sunita.agarwal@example.com or cook@homefeast.test'
                         : role === 'RIDER'
-                        ? 'e.g. raju@gmail.com or vikas.saini@example.com'
+                        ? 'e.g. vikas.saini@example.com or rider@homefeast.test'
                         : 'e.g. customer@homefeast.test or 98290 12345'
                     }
                     required

@@ -26,6 +26,22 @@ class DatabaseStore {
           console.log('🔄 Re-seeding database with complete HomeFeast models...');
           this.data = seedDatabase();
           this.save();
+        } else if (!this.data.users.some(u => u.role === 'ADMIN' || u.email === 'admin@homefeast.test')) {
+          this.data.users.unshift({
+            id: 'usr_admin',
+            name: 'Priya Sharma (Platform Admin)',
+            email: 'admin@homefeast.test',
+            phone: '+91 98290 00001',
+            passwordHash: '$2b$10$7v1b8Q3U5gO02HwJkPqTSeQZ21VqAOmhT0JzZ2VjJ5R3hK4uH1eG6',
+            role: 'ADMIN',
+            city: 'jaipur',
+            area: 'C-Scheme',
+            address: 'HomeFeast HQ, 502 Apex Tower, Tonk Road, Jaipur',
+            status: 'ACTIVE',
+            createdAt: '2026-01-01T10:00:00Z',
+            updatedAt: '2026-01-01T10:00:00Z'
+          });
+          this.save();
         }
       } else {
         console.log('🌱 Initializing fresh HomeFeast database with rich seed data...');

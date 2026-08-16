@@ -4,22 +4,31 @@ const mealPlanSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true, index: true },
   providerId: { type: String, required: true, index: true },
   name: { type: String, required: true },
-  planType: { type: String, enum: ['DAILY', 'WEEKLY', 'MONTHLY'], default: 'MONTHLY' },
+  tagline: { type: String, default: '' },
+  description: { type: String, default: '' },
+  planType: { type: String, default: 'MONTHLY' },
   durationDays: { type: Number, default: 30 },
+  duration: { type: Number, default: 30 },
   totalMeals: { type: Number, default: 30 },
   price: { type: Number, required: true },
+  totalPrice: { type: Number },
   pricePerMeal: { type: Number, required: true },
-  discountPercent: { type: Number, default: 20 },
+  savings: { type: String, default: '' },
+  badge: { type: String, default: 'BEST VALUE' },
+  idealFor: { type: String, default: '' },
+  popular: { type: Boolean, default: false },
   features: [{ type: String }],
+  includedMenuItems: [{ type: String }],
   mealSlot: { type: String, default: 'Lunch & Dinner' },
   dietPreference: { type: String, default: 'Vegetarian' },
-  pauseAllowedDays: { type: Number, default: 5 },
+  status: { type: String, default: 'ACTIVE' },
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 }, {
   timestamps: true,
-  collection: 'meal_plans'
+  collection: 'meal_plans',
+  strict: false
 });
 
 export const MealPlan = mongoose.models.MealPlan || mongoose.model('MealPlan', mealPlanSchema);

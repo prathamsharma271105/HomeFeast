@@ -331,6 +331,165 @@ router.post('/cuisines', (req, res) => {
   res.json({ success: true, message: 'Cuisine added.', data: newCui });
 });
 
+// GET /api/admin/subscriptions - Platform-wide passes
+router.get('/subscriptions', (req, res) => {
+  const { status, search } = req.query;
+  const store = db.get();
+  let list = [...(store.subscriptions || [])];
+
+  if (status && status !== 'all') {
+    list = list.filter(s => s.status === status);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(s =>
+      (s.customerName || '').toLowerCase().includes(q) ||
+      (s.customerPhone || '').includes(q) ||
+      (s.providerName || '').toLowerCase().includes(q) ||
+      (s.mealPlanName || '').toLowerCase().includes(q) ||
+      (s.id || '').toLowerCase().includes(q)
+    );
+  }
+
+  res.json({
+    success: true,
+    data: list
+  });
+});
+
+// GET /api/admin/orders - Platform-wide orders
+router.get('/orders', (req, res) => {
+  const { status, search } = req.query;
+  const store = db.get();
+  let list = [...(store.orders || [])];
+
+  if (status && status !== 'all') {
+    list = list.filter(o => o.orderStatus === status);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter(o =>
+      (o.customerName || '').toLowerCase().includes(q) ||
+      (o.customerPhone || '').includes(q) ||
+      (o.providerName || '').toLowerCase().includes(q) ||
+      (o.id || '').toLowerCase().includes(q)
+    );
+  }
+
+  res.json({
+    success: true,
+    data: list
+  });
+});
+
+// POST /api/admin/users - Admin directly registers a user
+router.post('/users', (req, res) => {
+  const { name, email, phone, role = 'CUSTOMER', city = 'jaipur', area = 'Malviya Nagar', address = '' } = req.body;
+  if (!name || !email || !phone) {
+    return res.status(400).json({ success: false, message: 'Name, email, and phone are required.' });
+  }
+
+  const store = db.get();
+  const newUser = {
+    id: `usr_${Date.now()}`,
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    phone: phone.trim(),
+    role: role.toUpperCase(),
+    city: city.toLowerCase(),
+    area: area.trim(),
+    address: address.trim() || `${area}, ${city}`,
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  store.users.unshift(newUser);
+  db.save(store);
+
+  res.status(201).json({
+    success: true,
+    message: `User ${name} created successfully as ${role}!`,
+    data: newUser
+  });
+});
+
+// POST /api/admin/providers - Admin directly registers a kitchen partner
+router.post('/providers', (req, res) => {
+  const {
+    businessName,
+    ownerName,
+    email,
+    phone,
+    city = 'jaipur',
+    area = 'Malviya Nagar',
+    address = '',
+    cuisines = ['North Indian', 'Homemade'],
+    fssaiNumber = '10023011004821',
+    hygieneScore = '99.2%'
+  } = req.body;
+
+  if (!businessName || !ownerName || !phone) {
+    return res.status(400).json({ success: false, message: 'Kitchen name, owner name, and phone are required.' });
+  }
+
+  const store = db.get();
+  const newProvId = `prov_${Date.now()}`;
+  const newUserId = `usr_${Date.now()}`;
+
+  const newProvUser = {
+    id: newUserId,
+    name: ownerName.trim(),
+    email: (email || `cook_${Date.now()}@homefeast.test`).trim().toLowerCase(),
+    phone: phone.trim(),
+    role: 'PROVIDER',
+    city: city.toLowerCase(),
+    area: area.trim(),
+    address: address.trim() || `${area}, ${city}`,
+    status: 'ACTIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  const newProvider = {
+    id: newProvId,
+    userId: newUserId,
+    businessName: businessName.trim(),
+    ownerName: ownerName.trim(),
+    email: newProvUser.email,
+    phone: phone.trim(),
+    description: req.body.description || 'Verified HomeFeast cloud kitchen partner.',
+    image: req.body.image || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=700&q=80',
+    cuisines: Array.isArray(cuisines) ? cuisines : [cuisines],
+    mealType: req.body.mealType || 'veg',
+    city: city.toLowerCase(),
+    area: area.trim(),
+    address: address.trim() || `${area}, ${city}`,
+    approvalStatus: 'APPROVED',
+    rating: 5.0,
+    totalReviews: 0,
+    startingPrice: 99,
+    availableMealPlans: ['DAILY', 'WEEKLY', 'MONTHLY'],
+    isAcceptingOrders: true,
+    minOrder: 80,
+    fssaiNumber: fssaiNumber || '10023011004821',
+    hygieneScore: hygieneScore || '99.0%',
+    packagingType: 'Stainless Steel Insulated Dabba',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  store.users.unshift(newProvUser);
+  store.providers.unshift(newProvider);
+  db.save(store);
+
+  res.status(201).json({
+    success: true,
+    message: `Kitchen "${businessName}" created and verified successfully!`,
+    data: newProvider
+  });
+});
+
 // POST /api/admin/reset-database - Reset to fresh seed
 router.post('/reset-database', (req, res) => {
   const fresh = db.resetToSeed();

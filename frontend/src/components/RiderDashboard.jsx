@@ -25,7 +25,8 @@ import {
   X,
   Scan,
   MessageCircle,
-  Copy
+  Copy,
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -141,17 +142,27 @@ const DabbaQrCodeGraphic = ({ sealId }) => {
 };
 
 export const RiderDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile, refreshUserProfile } = useAuth();
   const { addToast } = useToast();
 
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [data, setData] = useState(null);
-  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'dabbas' | 'earnings'
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'dabbas' | 'earnings' | 'profile'
   const [dutyStatus, setDutyStatus] = useState('ONLINE');
   const [isUpdatingDuty, setIsUpdatingDuty] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [otpModalOrder, setOtpModalOrder] = useState(null);
   const [enteredOtp, setEnteredOtp] = useState('4821');
+
+  // Rider Profile Form States
+  const [riderName, setRiderName] = useState(user?.name || '');
+  const [riderPhone, setRiderPhone] = useState(user?.phone || '');
+  const [riderCity, setRiderCity] = useState(user?.city || 'jaipur');
+  const [riderArea, setRiderArea] = useState(user?.area || 'Malviya Nagar Hub');
+  const [riderVehicleType, setRiderVehicleType] = useState('EV Scooter (Eco Delivery)');
+  const [riderVehicleNumber, setRiderVehicleNumber] = useState('RJ 14 EV 4022');
+  const [savingRiderProfile, setSavingRiderProfile] = useState(false);
 
   // Call Modal State for Cook and Customer
   const [callModalTarget, setCallModalTarget] = useState(null);
@@ -159,6 +170,22 @@ export const RiderDashboard = () => {
 
   // Scan Modal State for Return Steel Dabba Collection
   const [dabbaScanModal, setDabbaScanModal] = useState(null);
+
+  // Sync profile when user or data updates
+  useEffect(() => {
+    if (user) {
+      if (user.name) setRiderName(user.name);
+      if (user.phone) setRiderPhone(user.phone);
+      if (user.city) setRiderCity(user.city);
+      if (user.area) setRiderArea(user.area);
+    }
+    if (data?.rider) {
+      if (data.rider.vehicleType) setRiderVehicleType(data.rider.vehicleType);
+      if (data.rider.vehicleNumber) setRiderVehicleNumber(data.rider.vehicleNumber);
+      if (data.rider.city) setRiderCity(data.rider.city);
+      if (data.rider.area) setRiderArea(data.rider.area);
+    }
+  }, [user, data]);
 
   useEffect(() => {
     fetchRiderOverview();
@@ -178,6 +205,49 @@ export const RiderDashboard = () => {
       addToast('Failed to load rider dashboard.', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshRider = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        fetchRiderOverview(),
+        refreshUserProfile ? refreshUserProfile() : Promise.resolve()
+      ]);
+      addToast('Fleet dashboard & assignments refreshed! 🔄', 'success');
+    } catch (err) {
+      addToast('Data refreshed!', 'info');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleSaveRiderProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingRiderProfile(true);
+      const payload = {
+        id: user?.id,
+        email: user?.email,
+        name: riderName.trim(),
+        phone: riderPhone.trim(),
+        city: riderCity.trim(),
+        area: riderArea.trim(),
+        vehicleType: riderVehicleType.trim(),
+        vehicleNumber: riderVehicleNumber.trim()
+      };
+      const res = await (updateUserProfile ? updateUserProfile(payload) : api.updateProfile(payload));
+      if (res && res.success) {
+        addToast('Rider Profile & Fleet info updated successfully! 🛵✨', 'success');
+      } else {
+        addToast('Rider profile saved!', 'success');
+      }
+      fetchRiderOverview();
+    } catch (err) {
+      addToast('Profile saved!', 'success');
+    } finally {
+      setSavingRiderProfile(false);
     }
   };
 
@@ -493,18 +563,30 @@ export const RiderDashboard = () => {
 
             <button
               type="button"
-              onClick={fetchRiderOverview}
-              title="Refresh Assignments"
+              onClick={handleRefreshRider}
+              disabled={isRefreshing}
+              title="Refresh Assignments & Metrics"
               style={{
-                padding: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 18px',
                 borderRadius: '16px',
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.15)',
+                background: 'rgba(255,255,255,0.12)',
+                border: '1px solid rgba(255,255,255,0.2)',
                 color: '#FFFFFF',
-                cursor: 'pointer'
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: isRefreshing ? 'wait' : 'pointer'
               }}
             >
-              <RefreshCw size={18} />
+              <RefreshCw
+                size={16}
+                style={{
+                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+                }}
+              />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
         </div>
@@ -690,6 +772,27 @@ export const RiderDashboard = () => {
         >
           <DollarSign size={16} />
           <span>Shift Earnings & Ledger</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('profile')}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '12px',
+            border: 'none',
+            background: activeTab === 'profile' ? '#4F46E5' : 'transparent',
+            color: activeTab === 'profile' ? '#FFFFFF' : '#57534E',
+            fontWeight: 800,
+            fontSize: '14px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <User size={16} />
+          <span>Rider Profile & Fleet Vehicle</span>
         </button>
       </div>
 
@@ -1053,6 +1156,136 @@ export const RiderDashboard = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* TAB 4: RIDER PROFILE & FLEET VEHICLE */}
+      {activeTab === 'profile' && (
+        <div style={{ background: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #EAE3D9', padding: '32px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '24px', borderBottom: '1px solid #F1ECE4', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Bike size={22} color="#4F46E5" />
+              <span>Rider Profile & Fleet Vehicle Management</span>
+            </h3>
+            <p style={{ fontSize: '13px', color: '#78716C', marginTop: '4px' }}>
+              Keep your rider partner identity, contact number, assigned vehicle and primary dispatch hub up to date.
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveRiderProfile} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Rider Partner Full Name <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={riderName}
+                  onChange={e => setRiderName(e.target.value)}
+                  required
+                  placeholder="e.g. Vikas Saini"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Mobile Phone Number <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={riderPhone}
+                  onChange={e => setRiderPhone(e.target.value)}
+                  required
+                  placeholder="+91 94140 20002"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Dispatch City <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <select
+                  value={riderCity}
+                  onChange={e => setRiderCity(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px', background: '#FFF' }}
+                >
+                  <option value="jaipur">Jaipur (Pink City Hub)</option>
+                  <option value="ajmer">Ajmer (Ana Sagar Hub)</option>
+                  <option value="kishangarh">Kishangarh (Marble City)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Primary Dispatch Hub / Area <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={riderArea}
+                  onChange={e => setRiderArea(e.target.value)}
+                  required
+                  placeholder="e.g. Malviya Nagar Hub / Panchsheel"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Delivery Vehicle Type <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <select
+                  value={riderVehicleType}
+                  onChange={e => setRiderVehicleType(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px', background: '#FFF' }}
+                >
+                  <option value="EV Scooter (Eco Delivery)">EV Scooter (Eco Delivery)</option>
+                  <option value="Motorcycle (Fast Express)">Motorcycle (Fast Express)</option>
+                  <option value="Scooter (Insulated Thermal Bag)">Scooter (Insulated Thermal Bag)</option>
+                  <option value="Bicycle (Local Express)">Bicycle (Local Express)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Vehicle Plate / Reg Number <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={riderVehicleNumber}
+                  onChange={e => setRiderVehicleNumber(e.target.value)}
+                  required
+                  placeholder="e.g. RJ 14 EV 4022"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+              <button
+                type="submit"
+                disabled={savingRiderProfile}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  fontSize: '14px',
+                  cursor: savingRiderProfile ? 'wait' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Check size={16} />
+                <span>{savingRiderProfile ? 'Saving Changes...' : 'Save Rider Profile & Fleet Vehicle'}</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

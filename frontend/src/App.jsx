@@ -73,7 +73,7 @@ function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onGoHome
 }
 
 export function App() {
-  const { user, switchRole } = useAuth();
+  const { user } = useAuth();
   const getInitialPage = () => {
     const hash = window.location.hash.replace('#', '');
     const validPages = [
@@ -196,19 +196,19 @@ export function App() {
         {activePage === 'provider-portal' && (
           user?.role === 'PROVIDER'
             ? <ProviderDashboard />
-            : <RoleAccessBarrier requiredRole="PROVIDER" requiredTitle="Home Cook Kitchen Portal" requiredIcon="👩‍🍳" onSwitchRole={switchRole} onGoHome={() => navigateTo('home')} />
+            : <RoleAccessBarrier requiredRole="PROVIDER" requiredTitle="Home Cook Kitchen Portal" requiredIcon="👩‍🍳" onGoHome={() => navigateTo('home')} />
         )}
 
         {activePage === 'rider-portal' && (
           user?.role === 'RIDER'
             ? <RiderDashboard />
-            : <RoleAccessBarrier requiredRole="RIDER" requiredTitle="Green Fleet Rider Portal" requiredIcon="🚴" onSwitchRole={switchRole} onGoHome={() => navigateTo('home')} />
+            : <RoleAccessBarrier requiredRole="RIDER" requiredTitle="Green Fleet Rider Portal" requiredIcon="🚴" onGoHome={() => navigateTo('home')} />
         )}
 
         {activePage === 'admin' && (
           user?.role === 'ADMIN'
             ? <AdminDashboard />
-            : <RoleAccessBarrier requiredRole="ADMIN" requiredTitle="Platform Operations Hub" requiredIcon="🛡️" onSwitchRole={switchRole} onGoHome={() => navigateTo('home')} />
+            : <RoleAccessBarrier requiredRole="ADMIN" requiredTitle="Platform Operations Hub" requiredIcon="🛡️" onGoHome={() => navigateTo('home')} />
         )}
 
         {activePage === 'hygiene' && (

@@ -410,7 +410,7 @@ export const Footer = () => {
               <li><a href="#contact" style={{ transition: 'color 0.15s ease' }} onMouseEnter={e => e.target.style.color='#FFFFFF'} onMouseLeave={e => e.target.style.color='#A8A29E'}>Contact & Help Center</a></li>
               <li><a href="#hygiene" style={{ transition: 'color 0.15s ease' }} onMouseEnter={e => e.target.style.color='#FFFFFF'} onMouseLeave={e => e.target.style.color='#A8A29E'}>Kitchen Hygiene & FSSAI</a></li>
               <li><a href="#kitchens" style={{ transition: 'color 0.15s ease' }} onMouseEnter={e => e.target.style.color='#FFFFFF'} onMouseLeave={e => e.target.style.color='#A8A29E'}>Cloud Kitchen Network</a></li>
-              <li><a href="#admin" style={{ transition: 'color 0.15s ease' }} onMouseEnter={e => e.target.style.color='#FFFFFF'} onMouseLeave={e => e.target.style.color='#A8A29E'}>Kitchen Partner Portal</a></li>
+              <li><a href="#provider-portal" style={{ transition: 'color 0.15s ease' }} onMouseEnter={e => e.target.style.color='#FFFFFF'} onMouseLeave={e => e.target.style.color='#A8A29E'}>Kitchen Partner Portal</a></li>
               <li><a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" style={{ transition: 'color 0.15s ease', color: '#25D366' }}>Apply for Delivery Rider Job ↗</a></li>
             </ul>
           </div>

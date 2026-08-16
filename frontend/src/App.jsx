@@ -26,6 +26,7 @@ import { AuthModal } from './components/AuthModal';
 import { ReviewModal } from './components/ReviewModal';
 import { ComplaintModal } from './components/ComplaintModal';
 import { RiderDashboardModal } from './components/RiderDashboardModal';
+import { useAuth } from './context/AuthContext';
 
 function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onGoHome }) {
   const { user, setIsAuthModalOpen, setAuthModalTab } = useAuth();

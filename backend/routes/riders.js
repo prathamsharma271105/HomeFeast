@@ -1,8 +1,11 @@
 import express from 'express';
 import { db } from '../db.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Strict RBAC: Protect all /api/riders/* endpoints exclusively for RIDER and ADMIN roles
+router.use(requireAuth, requireRole('RIDER', 'ADMIN'));
 
 // Helper to format order for rider view
 const formatRiderOrder = (order, store) => {
@@ -34,7 +37,7 @@ const formatRiderOrder = (order, store) => {
 };
 
 // GET /api/riders/overview - Fleet Rider Dashboard KPIs & Active Task Assignments
-router.get('/overview', optionalAuth, (req, res) => {
+router.get('/overview', (req, res) => {
   const store = db.get();
   
   // Find current rider or default to Vikas Saini
@@ -140,7 +143,7 @@ router.get('/overview', optionalAuth, (req, res) => {
 });
 
 // PATCH /api/riders/duty-status - Toggle Online / Offline Duty
-router.patch('/duty-status', optionalAuth, (req, res) => {
+router.patch('/duty-status', (req, res) => {
   const { status } = req.body;
   const store = db.get();
   
@@ -163,7 +166,7 @@ router.patch('/duty-status', optionalAuth, (req, res) => {
 });
 
 // POST /api/riders/orders/:id/pickup - Confirm Kitchen Pickup
-router.post('/orders/:id/pickup', optionalAuth, (req, res) => {
+router.post('/orders/:id/pickup', (req, res) => {
   const { id } = req.params;
   const store = db.get();
   
@@ -222,7 +225,7 @@ router.post('/orders/:id/pickup', optionalAuth, (req, res) => {
 });
 
 // POST /api/riders/orders/:id/deliver - Complete Doorstep Delivery with OTP
-router.post('/orders/:id/deliver', optionalAuth, (req, res) => {
+router.post('/orders/:id/deliver', (req, res) => {
   const { id } = req.params;
   const { otp } = req.body;
   const store = db.get();
@@ -278,7 +281,7 @@ router.post('/orders/:id/deliver', optionalAuth, (req, res) => {
 });
 
 // POST /api/riders/dabbas/collect - Mark Return Steel Dabba Collected
-router.post('/dabbas/collect', optionalAuth, (req, res) => {
+router.post('/dabbas/collect', (req, res) => {
   const { dabbaId, customerName } = req.body;
   const store = db.get();
 
@@ -309,7 +312,7 @@ router.post('/dabbas/collect', optionalAuth, (req, res) => {
 });
 
 // POST /api/riders/simulate-order - Generate a fresh test delivery assignment
-router.post('/simulate-order', optionalAuth, (req, res) => {
+router.post('/simulate-order', (req, res) => {
   const store = db.get();
   const randNum = Math.floor(1000 + Math.random() * 9000);
   const sampleProviders = [

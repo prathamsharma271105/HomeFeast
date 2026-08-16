@@ -14,9 +14,15 @@ export class ErrorBoundary extends React.Component {
     console.error('HomeFeast ErrorBoundary caught error:', error, errorInfo);
   }
 
+  handleGoHome = () => {
+    this.setState({ hasError: false, error: null });
+    window.location.hash = '#home';
+    window.location.reload();
+  };
+
   handleReload = () => {
     this.setState({ hasError: false, error: null });
-    window.location.hash = '#my-pass';
+    window.location.hash = '';
     window.location.reload();
   };
 
@@ -48,26 +54,43 @@ export class ErrorBoundary extends React.Component {
           >
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍲</div>
             <h2 style={{ fontSize: '20px', fontWeight: 900, color: '#1C1917', marginBottom: '8px' }}>
-              HomeFeast Order Hub
+              HomeFeast Food Discovery
             </h2>
             <p style={{ fontSize: '13.5px', color: '#78716C', marginBottom: '20px', lineHeight: 1.5 }}>
-              A UI refresh is required to sync your live tiffin status. Click below to continue smoothly.
+              Click below to return smoothly to the HomeFeast discovery page.
             </p>
-            <button
-              onClick={this.handleReload}
-              style={{
-                background: '#E8590C',
-                color: '#FFFFFF',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              🔄 Reload Tiffin Dashboard
-            </button>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button
+                onClick={this.handleGoHome}
+                style={{
+                  background: '#E8590C',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 800,
+                  cursor: 'pointer'
+                }}
+              >
+                🏠 Return to Home
+              </button>
+              <button
+                onClick={this.handleReload}
+                style={{
+                  background: '#F5F5F4',
+                  color: '#1C1917',
+                  border: '1px solid #EAE3D9',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );

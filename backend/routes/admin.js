@@ -1,11 +1,14 @@
 import express from 'express';
 import { db } from '../db.js';
-import { requireAuth, requireRole, optionalAuth } from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Strict RBAC Middleware: Protect all /api/admin/* endpoints exclusively for ADMIN role
+router.use(requireAuth, requireRole('ADMIN'));
+
 // GET /api/admin/dashboard - High-level metrics & chart data
-router.get('/dashboard', optionalAuth, (req, res) => {
+router.get('/dashboard', (req, res) => {
   const store = db.get();
   const users = store.users || [];
   const providers = store.providers || [];

@@ -44,6 +44,35 @@ const SEED_USERS = [
     status: 'ACTIVE'
   },
   {
+    id: 'usr_prov_manisha',
+    name: 'Manisha',
+    email: 'manisha@gmail.com',
+    phone: '+91 98290 44444',
+    role: 'PROVIDER',
+    city: 'jaipur',
+    area: 'Malviya Nagar',
+    address: 'Malviya Nagar, Jaipur',
+    status: 'ACTIVE',
+    providerProfile: {
+      id: 'prov_manisha',
+      userId: 'usr_prov_manisha',
+      businessName: "Manisha's Homestyle Rasoi",
+      ownerName: 'Manisha',
+      email: 'manisha@gmail.com',
+      phone: '+91 98290 44444',
+      city: 'jaipur',
+      area: 'Malviya Nagar',
+      address: 'Malviya Nagar, Jaipur',
+      cuisines: ['North Indian', 'Rajasthani', 'Homestyle Thali'],
+      approvalStatus: 'APPROVED',
+      rating: 4.95,
+      totalReviews: 24,
+      startingPrice: 99,
+      fssaiNumber: '10023011004821',
+      hygieneScore: '99.2%'
+    }
+  },
+  {
     id: 'usr_rider_1',
     name: 'Vikas Saini',
     email: 'vikas.saini@example.com',
@@ -52,6 +81,27 @@ const SEED_USERS = [
     city: 'jaipur',
     area: 'Malviya Nagar Hub',
     status: 'ACTIVE'
+  },
+  {
+    id: 'usr_rider_raju',
+    name: 'Raju',
+    email: 'raju@gmail.com',
+    phone: '+91 98290 55555',
+    role: 'RIDER',
+    city: 'jaipur',
+    area: 'Malviya Nagar Hub',
+    status: 'ACTIVE',
+    riderProfile: {
+      id: 'rider_raju',
+      userId: 'usr_rider_raju',
+      name: 'Raju',
+      phone: '+91 98290 55555',
+      city: 'jaipur',
+      vehicleType: 'EV Scooter (Eco Delivery)',
+      vehicleNumber: 'RJ 14 EV 4022',
+      status: 'ONLINE',
+      rating: 4.98
+    }
   }
 ];
 
@@ -219,9 +269,10 @@ export const api = {
     );
 
     if (matched) {
-      if (role) {
-        matched.role = role.toUpperCase();
-      }
+      // Strictly preserve user's registered role
+      const userRole = (matched.role || (role ? role.toUpperCase() : 'CUSTOMER')).toUpperCase();
+      matched.role = userRole;
+
       if (matched.role === 'PROVIDER') {
         if (!matched.providerProfile) {
           matched.providerProfile = {

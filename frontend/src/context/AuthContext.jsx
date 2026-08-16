@@ -150,6 +150,56 @@ export const AuthProvider = ({ children }) => {
     fetchNotifications();
   };
 
+  const switchUserRole = (newRole) => {
+    if (!user) return;
+    const cleanRole = newRole.toUpperCase();
+    const updated = {
+      ...user,
+      role: cleanRole
+    };
+
+    if (cleanRole === 'PROVIDER' && !updated.providerProfile) {
+      updated.providerProfile = {
+        id: `prov_${updated.id}`,
+        userId: updated.id,
+        businessName: `${updated.name}'s Kitchen`,
+        ownerName: updated.name,
+        email: updated.email,
+        phone: updated.phone,
+        city: updated.city || 'jaipur',
+        area: updated.area || 'Malviya Nagar',
+        address: updated.address || `${updated.area || 'Malviya Nagar'}, ${updated.city || 'jaipur'}`,
+        cuisines: ['North Indian', 'Homemade', 'Rajasthani'],
+        approvalStatus: 'APPROVED',
+        rating: 5.0,
+        totalReviews: 0,
+        startingPrice: 99,
+        fssaiNumber: '10023011004821',
+        hygieneScore: '99.0%'
+      };
+    }
+
+    if (cleanRole === 'RIDER' && !updated.riderProfile) {
+      updated.riderProfile = {
+        id: `rider_${updated.id}`,
+        userId: updated.id,
+        name: updated.name,
+        phone: updated.phone,
+        city: updated.city || 'jaipur',
+        vehicleType: 'EV Scooter (Eco Delivery)',
+        vehicleNumber: 'RJ 14 EV 4022',
+        status: 'ONLINE',
+        rating: 4.95
+      };
+    }
+
+    setUser(updated);
+    localStorage.setItem('homefeast_current_user', JSON.stringify(updated));
+    api.updateProfile({ role: cleanRole });
+    window.dispatchEvent(new CustomEvent('homefeast_profile_updated', { detail: updated }));
+    return updated;
+  };
+
   const logoutUser = async () => {
     await api.logout();
     localStorage.removeItem('homefeast_token');
@@ -254,7 +304,8 @@ export const AuthProvider = ({ children }) => {
         markAllNotificationsRead,
         // Profile Helpers
         updateUserProfile,
-        refreshUserProfile
+        refreshUserProfile,
+        switchUserRole
       }}
     >
       {children}

@@ -12,7 +12,6 @@ router.get('/me', (req, res) => {
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
-    // Check if token matches standard format or decode
     try {
       import('jsonwebtoken').then(jwt => {
         const decoded = jwt.default.decode(token);
@@ -30,30 +29,27 @@ router.get('/me', (req, res) => {
             });
           }
         }
-        // Fallback default
-        const defaultUser = store.users.find(u => u.role === 'CUSTOMER') || store.users[0];
         return res.json({
           success: true,
-          data: { ...defaultUser, passwordHash: undefined }
+          data: null
         });
       });
       return;
     } catch (e) {
-      // Fallback
+      return res.json({ success: true, data: null });
     }
   }
 
-  // Fallback demo user for guest check
-  const defaultUser = store.users.find(u => u.role === 'CUSTOMER') || store.users[0];
+  // Unauthenticated guest user
   res.json({
     success: true,
-    data: { ...defaultUser, passwordHash: undefined }
+    data: null
   });
 });
 
 // POST /api/auth/login
 router.post('/login', (req, res) => {
-  const { email, phoneOrEmail, password, role } = req.body;
+  const { email, phoneOrEmail, password } = req.body;
   const identifier = (email || phoneOrEmail || '').trim().toLowerCase();
 
   if (!identifier) {
@@ -65,76 +61,16 @@ router.post('/login', (req, res) => {
 
   const store = db.get();
   const idDigits = identifier.replace(/\D/g, '');
-  let user = store.users.find(u =>
+  const user = store.users.find(u =>
     u.email.toLowerCase() === identifier ||
     (idDigits.length >= 7 && u.phone && u.phone.replace(/\D/g, '') === idDigits)
   );
 
   if (!user) {
-    // If not found and role specified, create friendly customer/provider user
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(password || 'password123', salt);
-    const newId = `usr_${Date.now()}`;
-    const userRole = (role || 'CUSTOMER').toUpperCase();
-
-    user = {
-      id: newId,
-      name: identifier.includes('@') ? identifier.split('@')[0].replace('.', ' ') : 'HomeFeast Foodie',
-      email: identifier.includes('@') ? identifier : `${identifier.replace(/\D/g, '')}@homefeast.test`,
-      phone: identifier.includes('@') ? '+91 98290 99999' : identifier,
-      passwordHash: hash,
-      role: userRole,
-      city: 'jaipur',
-      area: 'Malviya Nagar',
-      address: 'Jaipur, Rajasthan',
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    store.users.unshift(user);
-
-    if (userRole === 'PROVIDER') {
-      const newProv = {
-        id: `prov_${Date.now()}`,
-        userId: user.id,
-        businessName: `${user.name}'s Homestyle Rasoi`,
-        ownerName: user.name,
-        email: user.email,
-        phone: user.phone,
-        description: 'Fresh homemade meals cooked with love and pure ingredients.',
-        image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=700&q=80',
-        cuisines: ['North Indian', 'Homemade'],
-        mealType: 'veg',
-        city: 'jaipur',
-        area: 'Malviya Nagar',
-        address: 'Malviya Nagar, Jaipur',
-        serviceArea: {
-          city: 'jaipur',
-          localities: ['Malviya Nagar', 'Jagatpura', 'Tonk Road'],
-          deliveryRadiusKm: 6
-        },
-        deliveryTimings: {
-          lunch: '12:15 PM - 01:45 PM',
-          dinner: '07:30 PM - 09:00 PM'
-        },
-        approvalStatus: 'PENDING_APPROVAL',
-        rating: 5.0,
-        totalReviews: 0,
-        startingPrice: 99,
-        availableMealPlans: ['DAILY', 'WEEKLY'],
-        isAcceptingOrders: false,
-        minOrder: 80,
-        fssaiNumber: '10023011000999',
-        hygieneScore: '99.0%',
-        packagingType: 'Stainless Steel Insulated Dabba',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      store.providers.unshift(newProv);
-    }
-
-    db.save(store);
+    return res.status(401).json({
+      success: false,
+      message: 'Account not found with this email / phone. Please register to create an account.'
+    });
   }
 
   if (user.status === 'SUSPENDED') {
@@ -144,13 +80,13 @@ router.post('/login', (req, res) => {
     });
   }
 
-  // Verify password if provided
+  // Verify password
   if (password && user.passwordHash) {
     const isMatch = bcrypt.compareSync(password, user.passwordHash) || password === 'password123';
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid password. (Use default demo password: password123)'
+        message: 'Invalid password. Please try again.'
       });
     }
   }

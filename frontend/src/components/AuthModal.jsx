@@ -37,15 +37,15 @@ export const AuthModal = () => {
     if (authModalTab) setActiveTab(authModalTab);
   }, [authModalTab, isAuthModalOpen]);
 
-  // Login form fields
-  const [loginIdentifier, setLoginIdentifier] = useState('customer@homefeast.test');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  // Login form fields (empty by default for real user auth)
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
 
   // Registration form fields
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regPassword, setRegPassword] = useState('password123');
+  const [regPassword, setRegPassword] = useState('');
   const [regCity, setRegCity] = useState(selectedCity || 'jaipur');
   const [regArea, setRegArea] = useState(selectedLocality || 'Malviya Nagar');
   const [regAddress, setRegAddress] = useState('');

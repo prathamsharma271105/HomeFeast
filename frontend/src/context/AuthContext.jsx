@@ -102,11 +102,50 @@ export const AuthProvider = ({ children }) => {
     setUnreadNotifCount(0);
   };
 
+  const refreshUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('homefeast_token');
+      if (token) {
+        const profile = await api.getProfile();
+        if (profile) {
+          setUser(profile);
+          fetchSubscription();
+          fetchNotifications();
+          return profile;
+        }
+      }
+      return null;
+    } catch (err) {
+      console.warn('refreshUserProfile error:', err);
+      return null;
+    }
+  };
+
+  const updateUserProfile = async (payload) => {
+    try {
+      const res = await api.updateProfile(payload);
+      if (res && res.success && res.data) {
+        if (res.token) {
+          localStorage.setItem('homefeast_token', res.token);
+        }
+        setUser(res.data);
+        if (res.data.city) setSelectedCity(res.data.city);
+        if (res.data.area) setSelectedLocality(res.data.area);
+        window.dispatchEvent(new CustomEvent('homefeast_profile_updated', { detail: res.data }));
+      }
+      return res;
+    } catch (err) {
+      console.warn('updateUserProfile error:', err);
+      return { success: false, message: 'Could not update profile.' };
+    }
+  };
+
   const loginUser = (userData) => {
     setUser(userData);
     if (userData.city) setSelectedCity(userData.city);
     if (userData.area) setSelectedLocality(userData.area);
     setIsAuthModalOpen(false);
+    window.dispatchEvent(new CustomEvent('homefeast_profile_updated', { detail: userData }));
     fetchSubscription();
     fetchNotifications();
   };
@@ -118,6 +157,7 @@ export const AuthProvider = ({ children }) => {
     setActiveSubscription(null);
     setNotifications([]);
     setUnreadNotifCount(0);
+    window.dispatchEvent(new CustomEvent('homefeast_profile_updated', { detail: null }));
   };
 
   const switchLocation = (cityId, localityName, newAddress, gpsData = null) => {
@@ -211,7 +251,10 @@ export const AuthProvider = ({ children }) => {
         unreadNotifCount,
         fetchNotifications,
         markNotificationRead,
-        markAllNotificationsRead
+        markAllNotificationsRead,
+        // Profile Helpers
+        updateUserProfile,
+        refreshUserProfile
       }}
     >
       {children}

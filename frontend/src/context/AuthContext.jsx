@@ -120,23 +120,6 @@ export const AuthProvider = ({ children }) => {
     setUnreadNotifCount(0);
   };
 
-  // Quick 1-Click Role Switcher for instant demo testing
-  const switchRole = async (targetRole) => {
-    const roleUpper = targetRole.toUpperCase();
-    let email = 'customer@homefeast.test';
-    if (roleUpper === 'PROVIDER') email = 'provider@homefeast.test';
-    if (roleUpper === 'ADMIN') email = 'admin@homefeast.test';
-    if (roleUpper === 'RIDER') email = 'rider@homefeast.test';
-
-    const res = await api.login(email, 'password123', roleUpper);
-    const userObj = res.user || res.data;
-    if (res.success && userObj) {
-      loginUser(userObj);
-      return userObj;
-    }
-    return null;
-  };
-
   const switchLocation = (cityId, localityName, newAddress, gpsData = null) => {
     const cleanCityId = (cityId || 'jaipur').toLowerCase().replace(/\s+/g, '-');
     setSelectedCity(cleanCityId);
@@ -194,7 +177,6 @@ export const AuthProvider = ({ children }) => {
         setUser,
         loginUser,
         logoutUser,
-        switchRole,
         selectedCity,
         selectedLocality,
         liveGpsInfo,

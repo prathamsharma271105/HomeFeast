@@ -193,13 +193,13 @@ export function App() {
         )}
 
         {activePage === 'provider-portal' && (
-          user?.role === 'PROVIDER'
+          (user?.role === 'PROVIDER' || user?.role === 'ADMIN')
             ? <ProviderDashboard />
             : <RoleAccessBarrier requiredRole="PROVIDER" requiredTitle="Home Cook Kitchen Portal" requiredIcon="👩‍🍳" onGoHome={() => navigateTo('home')} />
         )}
 
         {activePage === 'rider-portal' && (
-          user?.role === 'RIDER'
+          (user?.role === 'RIDER' || user?.role === 'ADMIN')
             ? <RiderDashboard />
             : <RoleAccessBarrier requiredRole="RIDER" requiredTitle="Green Fleet Rider Portal" requiredIcon="🚴" onGoHome={() => navigateTo('home')} />
         )}

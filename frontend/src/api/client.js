@@ -1,5 +1,5 @@
 // Full REST API Client for HomeFeast Platform with JWT Token Support
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 
 const getHeaders = (isJson = true) => {
   const headers = {};

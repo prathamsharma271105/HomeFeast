@@ -29,8 +29,8 @@ import { RiderDashboardModal } from './components/RiderDashboardModal';
 
 import { useAuth } from './context/AuthContext';
 
-function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onSwitchRole, onGoHome }) {
-  const { user } = useAuth();
+function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onGoHome }) {
+  const { user, setIsAuthModalOpen, setAuthModalTab } = useAuth();
   const currentRole = user?.role || 'GUEST';
 
   return (
@@ -51,11 +51,13 @@ function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onSwitch
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '360px', margin: '0 auto' }}>
         <button
           className="btn btn-primary"
-          data-testid="barrier-switch-role-button"
-          onClick={() => onSwitchRole(requiredRole)}
+          onClick={() => {
+            setAuthModalTab('login');
+            setIsAuthModalOpen(true);
+          }}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontWeight: 700, borderRadius: '12px' }}
         >
-          <span>{requiredIcon} 1-Click Demo Login as {requiredRole}</span>
+          <span>🔐 Sign In with {requiredRole} Credentials</span>
         </button>
         <button
           className="btn btn-secondary"

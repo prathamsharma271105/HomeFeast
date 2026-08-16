@@ -1,8 +1,13 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { User, Provider, MenuItem, MealPlan, Order, Subscription, Review, Complaint, Notification, Coupon } from '../models/index.js';
 import { seedDatabase } from '../seed/seedData.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
 dotenv.config();
 
 let isConnected = false;

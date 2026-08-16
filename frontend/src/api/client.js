@@ -44,35 +44,6 @@ const SEED_USERS = [
     status: 'ACTIVE'
   },
   {
-    id: 'usr_prov_manisha',
-    name: 'Manisha',
-    email: 'manisha@gmail.com',
-    phone: '+91 98290 44444',
-    role: 'PROVIDER',
-    city: 'jaipur',
-    area: 'Malviya Nagar',
-    address: 'Malviya Nagar, Jaipur',
-    status: 'ACTIVE',
-    providerProfile: {
-      id: 'prov_manisha',
-      userId: 'usr_prov_manisha',
-      businessName: "Manisha's Homestyle Rasoi",
-      ownerName: 'Manisha',
-      email: 'manisha@gmail.com',
-      phone: '+91 98290 44444',
-      city: 'jaipur',
-      area: 'Malviya Nagar',
-      address: 'Malviya Nagar, Jaipur',
-      cuisines: ['North Indian', 'Rajasthani', 'Homestyle Thali'],
-      approvalStatus: 'APPROVED',
-      rating: 4.95,
-      totalReviews: 24,
-      startingPrice: 99,
-      fssaiNumber: '10023011004821',
-      hygieneScore: '99.2%'
-    }
-  },
-  {
     id: 'usr_rider_1',
     name: 'Vikas Saini',
     email: 'vikas.saini@example.com',
@@ -81,39 +52,28 @@ const SEED_USERS = [
     city: 'jaipur',
     area: 'Malviya Nagar Hub',
     status: 'ACTIVE'
-  },
-  {
-    id: 'usr_rider_raju',
-    name: 'Raju',
-    email: 'raju@gmail.com',
-    phone: '+91 98290 55555',
-    role: 'RIDER',
-    city: 'jaipur',
-    area: 'Malviya Nagar Hub',
-    status: 'ACTIVE',
-    riderProfile: {
-      id: 'rider_raju',
-      userId: 'usr_rider_raju',
-      name: 'Raju',
-      phone: '+91 98290 55555',
-      city: 'jaipur',
-      vehicleType: 'EV Scooter (Eco Delivery)',
-      vehicleNumber: 'RJ 14 EV 4022',
-      status: 'ONLINE',
-      rating: 4.98
-    }
   }
 ];
+
+const PURGE_NAMES = ['manisha', 'raju', 'pratham', 'rakesh'];
+const isPurgeTarget = (str) => {
+  if (!str || typeof str !== 'string') return false;
+  const lower = str.toLowerCase();
+  return PURGE_NAMES.some(name => lower.includes(name));
+};
 
 const getLocalUsers = () => {
   try {
     const raw = localStorage.getItem('homefeast_registered_users');
-    if (!raw) {
-      localStorage.setItem('homefeast_registered_users', JSON.stringify(SEED_USERS));
-      return [...SEED_USERS];
+    let list = raw ? JSON.parse(raw) : [...SEED_USERS];
+    if (!Array.isArray(list) || list.length === 0) list = [...SEED_USERS];
+
+    // Filter out any purged users
+    const filtered = list.filter(u => !isPurgeTarget(u.name) && !isPurgeTarget(u.email) && !isPurgeTarget(u.id));
+    if (filtered.length !== list.length) {
+      localStorage.setItem('homefeast_registered_users', JSON.stringify(filtered));
     }
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : [...SEED_USERS];
+    return filtered;
   } catch (e) {
     return [...SEED_USERS];
   }
@@ -133,28 +93,24 @@ const saveLocalUser = (user, password = '') => {
     if (existingIndex >= 0) {
       list[existingIndex] = { ...list[existingIndex], ...user, updatedAt: new Date().toISOString() };
     } else {
-      list.unshift({ ...user, createdAt: user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() });
+      list.unshift({ ...user, updatedAt: new Date().toISOString() });
     }
     localStorage.setItem('homefeast_registered_users', JSON.stringify(list));
-    localStorage.setItem('homefeast_current_user', JSON.stringify(user));
 
-    if (cleanEmail || cleanPhone) {
-      const credsRaw = localStorage.getItem('homefeast_user_creds') || '{}';
-      let creds = {};
-      try { creds = JSON.parse(credsRaw); } catch(err) {}
-      if (cleanEmail) creds[cleanEmail] = password || creds[cleanEmail] || 'password123';
-      if (cleanPhone) creds[cleanPhone] = password || creds[cleanPhone] || 'password123';
-      localStorage.setItem('homefeast_user_creds', JSON.stringify(creds));
+    if (password) {
+      const creds = JSON.parse(localStorage.getItem('homefeast_local_credentials') || '{}');
+      if (cleanEmail) creds[cleanEmail] = password;
+      if (cleanPhone) creds[cleanPhone] = password;
+      localStorage.setItem('homefeast_local_credentials', JSON.stringify(creds));
     }
-  } catch (e) {
-    console.warn('saveLocalUser error:', e);
-  }
+  } catch (e) {}
 };
 
 const getLocalSubscriptions = () => {
   try {
     const raw = localStorage.getItem('homefeast_local_subscriptions');
-    return raw ? JSON.parse(raw) : [];
+    const list = raw ? JSON.parse(raw) : [];
+    return list.filter(s => !isPurgeTarget(s.customerName) && !isPurgeTarget(s.customerEmail));
   } catch (e) {
     return [];
   }
@@ -163,7 +119,12 @@ const getLocalSubscriptions = () => {
 const saveLocalSubscription = (sub) => {
   try {
     const list = getLocalSubscriptions();
-    list.unshift(sub);
+    const exists = list.findIndex(s => s.id === sub.id);
+    if (exists >= 0) {
+      list[exists] = { ...list[exists], ...sub };
+    } else {
+      list.unshift(sub);
+    }
     localStorage.setItem('homefeast_local_subscriptions', JSON.stringify(list));
   } catch (e) {}
 };
@@ -171,7 +132,8 @@ const saveLocalSubscription = (sub) => {
 const getLocalOrders = () => {
   try {
     const raw = localStorage.getItem('homefeast_local_orders');
-    return raw ? JSON.parse(raw) : [];
+    const list = raw ? JSON.parse(raw) : [];
+    return list.filter(o => !isPurgeTarget(o.customerName) && !isPurgeTarget(o.customerEmail));
   } catch (e) {
     return [];
   }
@@ -180,7 +142,12 @@ const getLocalOrders = () => {
 const saveLocalOrder = (order) => {
   try {
     const list = getLocalOrders();
-    list.unshift(order);
+    const exists = list.findIndex(o => o.id === order.id);
+    if (exists >= 0) {
+      list[exists] = { ...list[exists], ...order };
+    } else {
+      list.unshift(order);
+    }
     localStorage.setItem('homefeast_local_orders', JSON.stringify(list));
   } catch (e) {}
 };
@@ -188,7 +155,8 @@ const saveLocalOrder = (order) => {
 const getLocalProviders = () => {
   try {
     const raw = localStorage.getItem('homefeast_local_providers');
-    return raw ? JSON.parse(raw) : [];
+    const list = raw ? JSON.parse(raw) : [];
+    return list.filter(p => !isPurgeTarget(p.ownerName) && !isPurgeTarget(p.email) && !isPurgeTarget(p.businessName));
   } catch (e) {
     return [];
   }
@@ -206,6 +174,18 @@ const saveLocalProvider = (provider) => {
     localStorage.setItem('homefeast_local_providers', JSON.stringify(list));
   } catch (e) {}
 };
+
+// Check and purge current session if logged in as any purged user
+try {
+  const currentRaw = localStorage.getItem('homefeast_current_user');
+  if (currentRaw) {
+    const current = JSON.parse(currentRaw);
+    if (current && (isPurgeTarget(current.name) || isPurgeTarget(current.email))) {
+      localStorage.removeItem('homefeast_current_user');
+      localStorage.removeItem('homefeast_token');
+    }
+  }
+} catch (e) {}
 
 export const api = {
   // 1. Authentication APIs

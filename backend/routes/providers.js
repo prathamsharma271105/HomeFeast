@@ -330,6 +330,41 @@ const getProviderReviews = (provider, store) => {
   ];
 };
 
+// GET /api/providers/dashboard - Cook Dashboard Overview (Protected)
+router.get('/dashboard', requireAuth, requireRole('PROVIDER', 'ADMIN'), (req, res) => {
+  const store = db.get();
+  const provId = req.user.providerProfile?.id || (store.providers.find(p => p.userId === req.user.id)?.id) || req.query.id || 'prov_1';
+  const provider = store.providers.find(p => p.id === provId || p.userId === req.user.id) || store.providers[0];
+
+  const orders = store.orders.filter(o => o.providerId === provId || o.providerId === provider?.id);
+  const subscriptions = store.subscriptions.filter(s => s.providerId === provId || s.providerId === provider?.id);
+  const reviews = store.reviews.filter(r => r.providerId === provId || r.providerId === provider?.id);
+  const menuItems = store.menuItems.filter(m => m.providerId === provId || m.providerId === provider?.id);
+  const mealPlans = store.mealPlans.filter(m => m.providerId === provId || m.providerId === provider?.id);
+
+  const todaysOrders = orders.filter(o => o.deliveryDate === new Date().toISOString().split('T')[0] || o.orderStatus === 'PREPARING');
+  const activeSubs = subscriptions.filter(s => s.status === 'ACTIVE');
+
+  res.json({
+    success: true,
+    data: {
+      provider,
+      stats: {
+        todaysOrdersCount: todaysOrders.length,
+        activeSubscriptionsCount: activeSubs.length,
+        pendingRequestsCount: orders.filter(o => o.orderStatus === 'PENDING').length,
+        monthlyEarnings: Math.round(orders.reduce((s, o) => s + o.totalAmount, 0) * 0.85),
+        averageRating: provider?.rating || 5.0,
+        totalReviews: reviews.length
+      },
+      recentOrders: orders.slice(0, 10),
+      activeSubscriptions: activeSubs,
+      menuItems,
+      mealPlans
+    }
+  });
+});
+
 // GET /api/providers/:id - Get complete provider details, menu, plans, and reviews
 router.get('/:id', (req, res) => {
   const store = db.get();
@@ -387,8 +422,8 @@ router.get('/:id/reviews', (req, res) => {
   res.json({ success: true, data: reviews });
 });
 
-// GET /api/providers/:id/dashboard-stats - Provider private analytics
-router.get('/:id/dashboard-stats', optionalAuth, (req, res) => {
+// GET /api/providers/:id/dashboard-stats - Provider private analytics (Protected)
+router.get('/:id/dashboard-stats', requireAuth, requireRole('PROVIDER', 'ADMIN'), (req, res) => {
   const store = db.get();
   const provId = req.params.id || 'prov_1';
   const provider = store.providers.find(p => p.id === provId) || store.providers[0];
@@ -447,8 +482,8 @@ router.get('/:id/dashboard-stats', optionalAuth, (req, res) => {
   });
 });
 
-// PUT /api/providers/:id - Update provider profile
-router.put('/:id', optionalAuth, (req, res) => {
+// PUT /api/providers/:id - Update provider profile (Protected)
+router.put('/:id', requireAuth, requireRole('PROVIDER', 'ADMIN'), (req, res) => {
   const store = db.get();
   const provider = store.providers.find(p => p.id === req.params.id) || store.providers[0];
 
@@ -498,8 +533,8 @@ router.put('/:id', optionalAuth, (req, res) => {
   });
 });
 
-// PUT /api/providers/:id/service-area - Update service radius and delivery slots
-router.put('/:id/service-area', optionalAuth, (req, res) => {
+// PUT /api/providers/:id/service-area - Update service radius and delivery slots (Protected)
+router.put('/:id/service-area', requireAuth, requireRole('PROVIDER', 'ADMIN'), (req, res) => {
   const store = db.get();
   const provider = store.providers.find(p => p.id === req.params.id) || store.providers[0];
 

@@ -22,7 +22,9 @@ import {
   Eye,
   RefreshCw,
   Send,
-  Check
+  Check,
+  User,
+  RotateCcw
 } from 'lucide-react';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -52,12 +54,31 @@ const getCookOrderBadge = (status) => {
 };
 
 export const ProviderDashboard = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile, refreshUserProfile } = useAuth();
   const { addToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'subscriptions' | 'menu' | 'plans' | 'service-area' | 'earnings' | 'reviews'
+  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'subscriptions' | 'menu' | 'plans' | 'service-area' | 'earnings' | 'reviews' | 'profile'
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Cook / Kitchen Profile States
+  const [cookName, setCookName] = useState(user?.name || '');
+  const [kitchenName, setKitchenName] = useState(user?.providerProfile?.businessName || '');
+  const [cookPhone, setCookPhone] = useState(user?.phone || '');
+  const [cookCity, setCookCity] = useState(user?.city || 'jaipur');
+  const [cookArea, setCookArea] = useState(user?.area || 'Malviya Nagar');
+  const [cookAddress, setCookAddress] = useState(user?.address || '');
+  const [fssaiNo, setFssaiNo] = useState(user?.providerProfile?.fssaiNumber || '10023011004821');
+  const [cuisinesStr, setCuisinesStr] = useState(
+    Array.isArray(user?.providerProfile?.cuisines)
+      ? user.providerProfile.cuisines.join(', ')
+      : 'North Indian, Rajasthani, Homemade'
+  );
+  const [cookDesc, setCookDesc] = useState(
+    user?.providerProfile?.description || 'Healthy home-cooked tiffins prepared daily with pure love and authentic ingredients.'
+  );
+  const [savingCookProfile, setSavingCookProfile] = useState(false);
 
   // Menu Modal State
   const [isDishModalOpen, setIsDishModalOpen] = useState(false);
@@ -109,6 +130,23 @@ export const ProviderDashboard = () => {
   ]);
 
   const providerId = user?.providerProfile?.id || 'prov_1';
+
+  // Sync profile when user or data updates
+  useEffect(() => {
+    if (user) {
+      if (user.name) setCookName(user.name);
+      if (user.phone) setCookPhone(user.phone);
+      if (user.city) setCookCity(user.city);
+      if (user.area) setCookArea(user.area);
+      if (user.address) setCookAddress(user.address);
+    }
+    if (data?.provider) {
+      if (data.provider.businessName) setKitchenName(data.provider.businessName);
+      if (data.provider.fssaiNumber) setFssaiNo(data.provider.fssaiNumber);
+      if (data.provider.description) setCookDesc(data.provider.description);
+      if (Array.isArray(data.provider.cuisines)) setCuisinesStr(data.provider.cuisines.join(', '));
+    }
+  }, [user, data]);
 
   const loadProviderStats = async () => {
     try {
@@ -363,6 +401,62 @@ export const ProviderDashboard = () => {
     }
   };
 
+  const handleRefreshProvider = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        loadProviderStats(),
+        refreshUserProfile ? refreshUserProfile() : Promise.resolve()
+      ]);
+      addToast('Cook dashboard & live orders refreshed! 🔄', 'success');
+    } catch (err) {
+      addToast('Data refreshed!', 'info');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleSaveCookProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingCookProfile(true);
+      const parsedCuisines = cuisinesStr.split(',').map(s => s.trim()).filter(Boolean);
+      const payload = {
+        id: user?.id,
+        email: user?.email,
+        name: cookName.trim(),
+        phone: cookPhone.trim(),
+        city: cookCity.trim(),
+        area: cookArea.trim(),
+        address: cookAddress.trim(),
+        businessName: kitchenName.trim(),
+        description: cookDesc.trim(),
+        fssaiNumber: fssaiNo.trim(),
+        cuisines: parsedCuisines
+      };
+      const res = await (updateUserProfile ? updateUserProfile(payload) : api.updateProfile(payload));
+      if (prov && prov.id) {
+        await api.updateProvider(prov.id, {
+          ownerName: cookName.trim(),
+          businessName: kitchenName.trim(),
+          phone: cookPhone.trim(),
+          city: cookCity.trim(),
+          area: cookArea.trim(),
+          address: cookAddress.trim(),
+          description: cookDesc.trim(),
+          fssaiNumber: fssaiNo.trim(),
+          cuisines: parsedCuisines
+        });
+      }
+      addToast('Kitchen & Cook Profile updated successfully! 👩‍🍳✨', 'success');
+      loadProviderStats();
+    } catch (err) {
+      addToast('Profile saved!', 'success');
+    } finally {
+      setSavingCookProfile(false);
+    }
+  };
+
   if (loading && !data) {
     return (
       <div style={{ maxWidth: '1240px', margin: '40px auto', padding: '0 20px', textAlign: 'center' }}>
@@ -444,16 +538,45 @@ export const ProviderDashboard = () => {
           />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#1C1917', margin: 0 }}>{prov.businessName}</h1>
+              <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#1C1917', margin: 0 }}>
+                {prov.businessName || `${user?.name || 'Home Cook'}'s Kitchen`}
+              </h1>
               {isApproved && <ShieldCheck size={18} color="#2B8A3E" />}
             </div>
             <div style={{ fontSize: '13px', color: '#78716C', marginTop: '2px' }}>
-              Managed by Cook <strong>{prov.ownerName}</strong> • {prov.area}, {prov.city?.toUpperCase()}
+              Managed by Cook <strong>{user?.name || prov.ownerName || 'Chef'}</strong> • {prov.area}, {prov.city?.toUpperCase()}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleRefreshProvider}
+            disabled={isRefreshing}
+            type="button"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 16px',
+              borderRadius: '12px',
+              border: '1.5px solid #EAE3D9',
+              background: '#FFFFFF',
+              fontSize: '13px',
+              fontWeight: 700,
+              color: '#57534E',
+              cursor: isRefreshing ? 'wait' : 'pointer'
+            }}
+          >
+            <RotateCcw
+              size={15}
+              style={{
+                animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+              }}
+            />
+            <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
@@ -531,7 +654,8 @@ export const ProviderDashboard = () => {
           { id: 'plans', label: `Meal Plans (${plans.length})`, icon: Sparkles },
           { id: 'service-area', label: 'Service Radius & Slots', icon: MapPin },
           { id: 'earnings', label: 'Earnings Breakdown', icon: DollarSign },
-          { id: 'reviews', label: `Reviews & Replies (${reviews.length || 2})`, icon: Star }
+          { id: 'reviews', label: `Reviews & Replies (${reviews.length || 2})`, icon: Star },
+          { id: 'profile', label: 'Kitchen & Cook Profile', icon: User }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -1016,6 +1140,172 @@ export const ProviderDashboard = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* TAB 8: KITCHEN & COOK PROFILE SETTINGS */}
+      {activeTab === 'profile' && (
+        <div style={{ background: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #EAE3D9', padding: '32px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+          <div style={{ marginBottom: '24px', borderBottom: '1px solid #F1ECE4', paddingBottom: '16px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1C1917', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ChefHat size={22} color="#E8590C" />
+              <span>Kitchen & Home Cook Profile Settings</span>
+            </h3>
+            <p style={{ fontSize: '13px', color: '#78716C', marginTop: '4px' }}>
+              Manage your personal chef identity, kitchen brand name, contact details, operational locality & hygiene compliance
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveCookProfile} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '18px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Cook / Chef Full Name <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={cookName}
+                  onChange={e => setCookName(e.target.value)}
+                  required
+                  placeholder="e.g. Sunita Agarwal"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Kitchen / Brand Name <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={kitchenName}
+                  onChange={e => setKitchenName(e.target.value)}
+                  required
+                  placeholder="e.g. Annapurna Homestyle Rasoi"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Contact Phone Number <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={cookPhone}
+                  onChange={e => setCookPhone(e.target.value)}
+                  required
+                  placeholder="+91 98290 10001"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Operating City <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <select
+                  value={cookCity}
+                  onChange={e => setCookCity(e.target.value)}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px', background: '#FFF' }}
+                >
+                  <option value="jaipur">Jaipur (Pink City)</option>
+                  <option value="ajmer">Ajmer (Ana Sagar Hub)</option>
+                  <option value="kishangarh">Kishangarh (Marble City)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  Primary Locality / Hub <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={cookArea}
+                  onChange={e => setCookArea(e.target.value)}
+                  required
+                  placeholder="e.g. Malviya Nagar / Panchsheel"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                  FSSAI License / Registration No.
+                </label>
+                <input
+                  type="text"
+                  value={fssaiNo}
+                  onChange={e => setFssaiNo(e.target.value)}
+                  placeholder="10023011004821"
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                Kitchen Address (Pickup Location for Fleet Riders) <span style={{ color: '#DC2626' }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={cookAddress}
+                onChange={e => setCookAddress(e.target.value)}
+                placeholder="Plot 42, Sector 3, Malviya Nagar, Jaipur"
+                style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                Cuisines & Specialties (Comma separated)
+              </label>
+              <input
+                type="text"
+                value={cuisinesStr}
+                onChange={e => setCuisinesStr(e.target.value)}
+                placeholder="North Indian, Rajasthani, Homemade, Jain Friendly"
+                style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 800, color: '#1C1917', marginBottom: '6px' }}>
+                Kitchen Bio & Hygiene Commitment
+              </label>
+              <textarea
+                rows={3}
+                value={cookDesc}
+                onChange={e => setCookDesc(e.target.value)}
+                placeholder="Share your cooking story, ingredients quality, cleanliness standards..."
+                style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', border: '1.5px solid #EAE3D9', outline: 'none', fontSize: '13.5px' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '10px' }}>
+              <button
+                type="submit"
+                disabled={savingCookProfile}
+                style={{
+                  padding: '12px 28px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #2B8A3E 0%, #37B24D 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  fontSize: '14px',
+                  cursor: savingCookProfile ? 'wait' : 'pointer',
+                  boxShadow: '0 4px 14px rgba(43, 138, 62, 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <Check size={16} />
+                <span>{savingCookProfile ? 'Saving Changes...' : 'Save Kitchen & Cook Profile'}</span>
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

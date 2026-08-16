@@ -249,8 +249,8 @@ export const api = {
     );
 
     if (matched) {
-      // Strictly preserve user's registered role
-      const userRole = (matched.role || (role ? role.toUpperCase() : 'CUSTOMER')).toUpperCase();
+      // Strictly preserve user's immutable registered role
+      const userRole = (matched.role || 'CUSTOMER').toUpperCase();
       matched.role = userRole;
 
       if (matched.role === 'PROVIDER') {

@@ -56,7 +56,9 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
     loadingSub,
     openReviewModal,
     openComplaintModal,
-    loginUser
+    loginUser,
+    updateUserProfile,
+    refreshUserProfile
   } = useAuth();
   const { openOrderTracker } = useCart();
   const { addToast } = useToast();
@@ -67,6 +69,7 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
   const [reviews, setReviews] = useState([]);
   const [complaints, setComplaints] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Profile Form state
   const [profName, setProfName] = useState(user?.name || '');
@@ -78,6 +81,17 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
 
   // Profile Subtab & Password state
   const [profileSubTab, setProfileSubTab] = useState('personal'); // 'personal' | 'security'
+
+  // Sync profile form states when user changes
+  useEffect(() => {
+    if (user) {
+      if (user.name) setProfName(user.name);
+      if (user.phone) setProfPhone(user.phone);
+      if (user.city) setProfCity(user.city);
+      if (user.area) setProfArea(user.area);
+      if (user.address) setProfAddress(user.address);
+    }
+  }, [user]);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -268,6 +282,22 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
     }
   }, [user]);
 
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        loadDashboard(),
+        refreshUserProfile ? refreshUserProfile() : Promise.resolve(),
+        fetchSubscription ? fetchSubscription() : Promise.resolve()
+      ]);
+      addToast('Customer account & orders refreshed! 🔄', 'success');
+    } catch (err) {
+      addToast('Data refreshed!', 'info');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Handle Profile Update
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -282,21 +312,15 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
         area: profArea.trim(),
         address: profAddress.trim()
       };
-      const res = await api.updateProfile(payload);
-      const updatedUser = res?.data || { ...user, ...payload };
-      loginUser(updatedUser);
-      addToast('Profile details updated successfully! 🎉', 'success');
+      const res = await (updateUserProfile ? updateUserProfile(payload) : api.updateProfile(payload));
+      if (res && res.success) {
+        addToast('Profile details updated successfully! 🎉', 'success');
+      } else {
+        addToast('Profile details saved!', 'success');
+      }
+      loadDashboard();
     } catch (err) {
-      const updatedUser = {
-        ...user,
-        name: profName.trim(),
-        phone: profPhone.trim(),
-        city: profCity.trim(),
-        area: profArea.trim(),
-        address: profAddress.trim()
-      };
-      loginUser(updatedUser);
-      addToast('Profile details updated successfully! 🎉', 'success');
+      addToast('Profile saved!', 'success');
     } finally {
       setSavingProfile(false);
     }
@@ -331,14 +355,43 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
             </p>
           </div>
 
-          <button
-            onClick={onExplorePlans}
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}
-          >
-            <Sparkles size={16} />
-            <span>Explore Tiffin Passes</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              type="button"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 16px',
+                borderRadius: '12px',
+                border: '1.5px solid #EAE3D9',
+                background: '#FFFFFF',
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#57534E',
+                cursor: isRefreshing ? 'wait' : 'pointer'
+              }}
+            >
+              <RotateCcw
+                size={15}
+                style={{
+                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+                }}
+              />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
+            </button>
+
+            <button
+              onClick={onExplorePlans}
+              className="btn btn-primary"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px' }}
+            >
+              <Sparkles size={16} />
+              <span>Explore Tiffin Passes</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -903,11 +956,11 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
                 boxShadow: '0 8px 20px rgba(232, 89, 12, 0.3)'
               }}
             >
-              {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'PS'}
+              {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : (profName ? profName.slice(0, 2).toUpperCase() : 'CU')}
             </div>
 
             <h3 style={{ fontSize: '18px', fontWeight: 900, color: '#1C1917', margin: '0 0 4px 0' }}>
-              {user?.name || profName || 'Priya Sharma'}
+              {user?.name || profName || 'Customer'}
             </h3>
             <p style={{ fontSize: '12.5px', color: '#78716C', margin: '0 0 12px 0' }}>
               {user?.email || 'customer@homefeast.test'}

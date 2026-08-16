@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ShieldCheck,
   Users,
@@ -205,7 +205,17 @@ const RevenueSplineChart = () => {
 };
 
 export const AdminDashboard = ({ onNavigatePage }) => {
-  const { user, loginUser, logoutUser } = useAuth();
+  const {
+    user,
+    loginUser,
+    logoutUser,
+    updateUserProfile,
+    refreshUserProfile,
+    notifications,
+    unreadNotifCount,
+    markNotificationRead,
+    markAllNotificationsRead
+  } = useAuth();
   const { addToast } = useToast();
 
   // Active Admin Sidebar Tab
@@ -213,14 +223,45 @@ export const AdminDashboard = ({ onNavigatePage }) => {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAdminNotiOpen, setIsAdminNotiOpen] = useState(false);
   const [universalSearch, setUniversalSearch] = useState('');
+  const adminNotiRef = useRef(null);
 
   // Profile Form States
-  const [profName, setProfName] = useState(user?.name || 'Priya Sharma (Admin)');
+  const [profName, setProfName] = useState(user?.name || 'Platform Admin');
   const [profEmail, setProfEmail] = useState(user?.email || 'admin@homefeast.test');
   const [profPhone, setProfPhone] = useState(user?.phone || '+91 98290 00001');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSubTab, setProfileSubTab] = useState('personal'); // 'personal' | 'security'
+
+  // Dynamic initials helper
+  const getAdminInitials = (name) => {
+    if (!name) return 'AD';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  // Sync profile form states when user changes
+  useEffect(() => {
+    if (user) {
+      if (user.name) setProfName(user.name);
+      if (user.email) setProfEmail(user.email);
+      if (user.phone) setProfPhone(user.phone);
+    }
+  }, [user]);
+
+  // Close Admin notification dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (adminNotiRef.current && !adminNotiRef.current.contains(e.target)) {
+        setIsAdminNotiOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Filter states
   const [provStatusFilter, setProvStatusFilter] = useState('all');
@@ -271,6 +312,21 @@ export const AdminDashboard = ({ onNavigatePage }) => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setIsRefreshing(true);
+      await Promise.all([
+        loadAdminData(),
+        refreshUserProfile ? refreshUserProfile() : Promise.resolve()
+      ]);
+      addToast('Admin dashboard & live metrics refreshed! 🔄', 'success');
+    } catch (err) {
+      addToast('Data refreshed!', 'info');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     loadAdminData();
   }, []);
@@ -280,15 +336,17 @@ export const AdminDashboard = ({ onNavigatePage }) => {
     e.preventDefault();
     try {
       setIsSavingProfile(true);
-      const res = await api.updateProfile({
-        name: profName,
-        phone: profPhone
+      const res = await updateUserProfile({
+        id: user?.id,
+        email: user?.email,
+        name: profName.trim(),
+        phone: profPhone.trim()
       });
       if (res && res.success) {
-        if (res.data) loginUser(res.data);
-        addToast('Admin profile details updated successfully!', 'success');
+        setUsersList(prev => prev.map(u => (u.id === user?.id || u.email === user?.email) ? { ...u, name: profName.trim(), phone: profPhone.trim() } : u));
+        addToast('Admin profile details updated successfully! 🎉', 'success');
       } else {
-        addToast('Profile updated!', 'success');
+        addToast(res?.message || 'Admin profile updated!', 'success');
       }
     } catch (err) {
       addToast('Error saving profile.', 'error');
@@ -554,11 +612,11 @@ export const AdminDashboard = ({ onNavigatePage }) => {
                   fontSize: '13px'
                 }}
               >
-                PS
+                {getAdminInitials(user?.name || profName)}
               </div>
               <div style={{ textAlign: 'left', lineHeight: 1.2 }}>
-                <div style={{ fontSize: '13px', fontWeight: 800, color: '#1C1917' }}>Priya Sharma</div>
-                <div style={{ fontSize: '10.5px', color: '#4F46E5', fontWeight: 700 }}>Admin</div>
+                <div style={{ fontSize: '13px', fontWeight: 800, color: '#1C1917' }}>{user?.name || profName || 'Admin User'}</div>
+                <div style={{ fontSize: '10.5px', color: '#4F46E5', fontWeight: 700 }}>Platform Admin</div>
               </div>
             </div>
             <ChevronRight size={15} color="#78716C" />
@@ -607,7 +665,8 @@ export const AdminDashboard = ({ onNavigatePage }) => {
           {/* Quick Action Pills & Notification */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
-              onClick={loadAdminData}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               type="button"
               title="Refresh Live Metrics"
               style={{
@@ -621,11 +680,18 @@ export const AdminDashboard = ({ onNavigatePage }) => {
                 fontSize: '12.5px',
                 fontWeight: 700,
                 color: '#57534E',
-                cursor: 'pointer'
+                cursor: isRefreshing ? 'wait' : 'pointer',
+                transition: 'all 0.2s ease'
               }}
             >
-              <RefreshCw size={14} />
-              <span>Refresh</span>
+              <RefreshCw
+                size={14}
+                style={{
+                  animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+                  transition: 'transform 0.3s ease'
+                }}
+              />
+              <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
 
             <button
@@ -645,33 +711,164 @@ export const AdminDashboard = ({ onNavigatePage }) => {
               Reset Seed
             </button>
 
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: '#FFFFFF',
-                border: '1px solid #EAE3D9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
-            >
-              <Bell size={18} color="#57534E" />
-              {pendingProviders.length > 0 && (
-                <span
+            {/* Admin Notifications Bell & Dropdown */}
+            <div style={{ position: 'relative' }} ref={adminNotiRef}>
+              <button
+                type="button"
+                onClick={() => setIsAdminNotiOpen(!isAdminNotiOpen)}
+                title="Platform Notifications & Approvals"
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: isAdminNotiOpen ? '#EEF2FF' : '#FFFFFF',
+                  border: '1px solid #EAE3D9',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  position: 'relative'
+                }}
+              >
+                <Bell size={18} color={isAdminNotiOpen ? '#4F46E5' : '#57534E'} />
+                {(pendingProviders.length > 0 || unreadNotifCount > 0) && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-3px',
+                      right: '-3px',
+                      background: '#DC2626',
+                      color: '#FFFFFF',
+                      fontSize: '10px',
+                      fontWeight: 900,
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px solid #FFFFFF'
+                    }}
+                  >
+                    {pendingProviders.length + (unreadNotifCount || 0)}
+                  </span>
+                )}
+              </button>
+
+              {/* Admin Notification Panel */}
+              {isAdminNotiOpen && (
+                <div
                   style={{
                     position: 'absolute',
-                    top: '6px',
-                    right: '6px',
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#DC2626'
+                    top: '48px',
+                    right: '0',
+                    width: '340px',
+                    background: '#FFFFFF',
+                    borderRadius: '18px',
+                    boxShadow: '0 20px 40px -10px rgba(0,0,0,0.18)',
+                    border: '1px solid #EAE3D9',
+                    zIndex: 300,
+                    overflow: 'hidden'
                   }}
-                />
+                >
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      background: '#FAF8F5',
+                      borderBottom: '1px solid #EAE3D9',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800, color: '#1C1917' }}>Admin Platform Alerts</span>
+                      <span style={{ background: '#EEF2FF', color: '#4F46E5', fontSize: '11px', fontWeight: 800, padding: '2px 6px', borderRadius: '6px' }}>
+                        {pendingProviders.length + (unreadNotifCount || 0)} new
+                      </span>
+                    </div>
+                    {unreadNotifCount > 0 && (
+                      <button
+                        onClick={markAllNotificationsRead}
+                        style={{ border: 'none', background: 'none', fontSize: '11px', color: '#4F46E5', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ maxHeight: '340px', overflowY: 'auto', padding: '8px' }}>
+                    {/* Pending Cook Approvals Alert */}
+                    {pendingProviders.length > 0 && (
+                      <div
+                        onClick={() => {
+                          setActiveNav('kitchens');
+                          setProvStatusFilter('PENDING_APPROVAL');
+                          setIsAdminNotiOpen(false);
+                        }}
+                        style={{
+                          padding: '12px',
+                          borderRadius: '12px',
+                          background: '#FFF4E6',
+                          border: '1px solid #FDBA74',
+                          marginBottom: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 800, color: '#C2410C' }}>
+                            👩‍🍳 {pendingProviders.length} Kitchen{pendingProviders.length > 1 ? 's' : ''} Awaiting Approval
+                          </span>
+                          <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#EA580C', background: '#FFFFFF', padding: '2px 6px', borderRadius: '4px' }}>Action</span>
+                        </div>
+                        <p style={{ fontSize: '11.5px', color: '#7C2D12', marginTop: '3px', margin: 0 }}>
+                          Review hygiene certifications and FSSAI compliance to verify home cooks.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* In-app notifications list */}
+                    {notifications.length === 0 && pendingProviders.length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: '#78716C', fontSize: '13px' }}>
+                        No new notifications at this time.
+                      </div>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            markNotificationRead(n.id);
+                            if (n.type === 'provider_approval' || (n.actionUrl && n.actionUrl.includes('provider'))) {
+                              setActiveNav('kitchens');
+                            } else if (n.type === 'dispute' || n.type === 'complaint') {
+                              setActiveNav('disputes');
+                            } else if (n.type === 'order') {
+                              setActiveNav('orders');
+                            } else if (n.type === 'user' || n.type === 'rider_onboarding') {
+                              setActiveNav('users');
+                            }
+                            setIsAdminNotiOpen(false);
+                          }}
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            background: n.isRead ? '#FFFFFF' : '#F5F3FF',
+                            marginBottom: '4px',
+                            cursor: 'pointer',
+                            border: n.isRead ? '1px solid transparent' : '1px solid #DDD6FE',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 800, color: '#1C1917' }}>{n.title}</span>
+                            {!n.isRead && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4F46E5' }}></span>}
+                          </div>
+                          <p style={{ fontSize: '11.5px', color: '#57534E', margin: 0, lineHeight: 1.35 }}>{n.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 
@@ -686,7 +883,8 @@ export const AdminDashboard = ({ onNavigatePage }) => {
                 borderRadius: '9999px',
                 background: '#FFFFFF',
                 border: '1px solid #EAE3D9',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
               <div
@@ -703,9 +901,11 @@ export const AdminDashboard = ({ onNavigatePage }) => {
                   fontWeight: 900
                 }}
               >
-                PS
+                {getAdminInitials(user?.name || profName)}
               </div>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1C1917' }}>Priya (Admin)</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#1C1917' }}>
+                {user?.name ? user.name.split(' ')[0] : (profName ? profName.split(' ')[0] : 'Admin')} (Admin)
+              </span>
             </div>
           </div>
         </div>
@@ -1026,7 +1226,7 @@ export const AdminDashboard = ({ onNavigatePage }) => {
                     boxShadow: '0 8px 24px rgba(79, 70, 229, 0.35)'
                   }}
                 >
-                  PS
+                  {getAdminInitials(user?.name || profName)}
                 </div>
 
                 <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#1C1917', margin: '0 0 4px 0' }}>

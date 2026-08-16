@@ -660,5 +660,3 @@ export const Navbar = ({ activePage, setActivePage }) => {
     </header>
   );
 };
-
-                      

@@ -1,13 +1,18 @@
 import http from 'http';
 import app from '../server.js';
+import { generateToken } from '../middleware/auth.js';
 
 let server;
 let port;
 let baseUrl;
+const adminToken = generateToken({ id: 'usr_admin', email: 'admin@homefeast.test', name: 'Priya Sharma (Admin)', role: 'ADMIN' });
 
-function get(path) {
+function get(path, token = null) {
   return new Promise((resolve, reject) => {
-    http.get(`${baseUrl}${path}`, (res) => {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    
+    http.get(`${baseUrl}${path}`, { headers }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
@@ -108,7 +113,7 @@ async function runTests() {
 
   // Test 6: Admin Dashboard Endpoint
   try {
-    const res = await get('/api/admin/dashboard');
+    const res = await get('/api/admin/dashboard', adminToken);
     if (res.status === 200 && res.data.success && res.data.data.stats) {
       console.log(`✅ Admin Dashboard (/api/admin/dashboard) passed -> Users: ${res.data.data.stats.totalUsers}, Kitchens: ${res.data.data.stats.totalProviders}`);
       passed++;
@@ -124,9 +129,9 @@ async function runTests() {
   // Test 7: Admin Subscriptions & Orders Endpoints
   try {
     const [subRes, ordRes, uRes] = await Promise.all([
-      get('/api/admin/subscriptions'),
-      get('/api/admin/orders'),
-      get('/api/admin/users')
+      get('/api/admin/subscriptions', adminToken),
+      get('/api/admin/orders', adminToken),
+      get('/api/admin/users', adminToken)
     ]);
     if (subRes.status === 200 && ordRes.status === 200 && uRes.status === 200) {
       console.log(`✅ Admin Platform Collections (/api/admin/subscriptions, /orders, /users) passed -> Subs: ${subRes.data.data.length}, Orders: ${ordRes.data.data.length}, Users: ${uRes.data.data.length}`);

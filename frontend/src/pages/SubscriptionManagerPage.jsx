@@ -123,23 +123,23 @@ export const SubscriptionManagerPage = ({ onBack, onExplorePlans }) => {
       setOrders(ordersList || []);
       setAllSubscriptions(subsList || []);
 
-      const rawReviews = revList || [];
-      const userReviews = rawReviews.filter(r =>
-        r.customerId === user?.id ||
-        (user?.name && (r.customerName || '').toLowerCase().trim() === user.name.toLowerCase().trim()) ||
-        (user?.name && (r.customerName || '').toLowerCase().includes(user.name.toLowerCase().split(' ')[0])) ||
-        (user?.name && user.name.toLowerCase().includes((r.customerName || '').toLowerCase().split(' ')[0]))
-      );
-      setReviews(userReviews.length > 0 ? userReviews : rawReviews);
+      const rawReviews = Array.isArray(revList) ? revList : [];
+      const userReviews = (user && user.id)
+        ? rawReviews.filter(r =>
+            r.customerId === user.id ||
+            (user.name && (r.customerName || '').toLowerCase().trim() === user.name.toLowerCase().trim())
+          )
+        : rawReviews;
+      setReviews(userReviews);
 
-      const rawComplaints = compList || [];
-      const userComplaints = rawComplaints.filter(c =>
-        c.customerId === user?.id ||
-        (user?.name && (c.customerName || '').toLowerCase().trim() === user.name.toLowerCase().trim()) ||
-        (user?.name && (c.customerName || '').toLowerCase().includes(user.name.toLowerCase().split(' ')[0])) ||
-        (user?.name && user.name.toLowerCase().includes((c.customerName || '').toLowerCase().split(' ')[0]))
-      );
-      setComplaints(userComplaints.length > 0 ? userComplaints : rawComplaints);
+      const rawComplaints = Array.isArray(compList) ? compList : [];
+      const userComplaints = (user && user.id)
+        ? rawComplaints.filter(c =>
+            c.customerId === user.id ||
+            (user.name && (c.customerName || '').toLowerCase().trim() === user.name.toLowerCase().trim())
+          )
+        : rawComplaints;
+      setComplaints(userComplaints);
     } catch (err) {
       console.error('Dashboard load error:', err);
     } finally {

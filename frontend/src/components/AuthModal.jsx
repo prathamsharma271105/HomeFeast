@@ -239,6 +239,102 @@ export const AuthModal = () => {
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
           {activeTab === 'login' ? (
             <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Sign In As Role Selector */}
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#1C1917', marginBottom: '8px' }}>
+                  Sign in as:
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setRole('CUSTOMER')}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: '10px',
+                      border: role === 'CUSTOMER' ? '2px solid #E8590C' : '1.5px solid #EAE3D9',
+                      background: role === 'CUSTOMER' ? '#FFF4E6' : '#FFFFFF',
+                      color: role === 'CUSTOMER' ? '#E8590C' : '#57534E',
+                      fontWeight: 700,
+                      fontSize: '11.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <User size={14} />
+                    <span>Customer</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRole('PROVIDER')}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: '10px',
+                      border: role === 'PROVIDER' ? '2px solid #2B8A3E' : '1.5px solid #EAE3D9',
+                      background: role === 'PROVIDER' ? '#EBFBEE' : '#FFFFFF',
+                      color: role === 'PROVIDER' ? '#2B8A3E' : '#57534E',
+                      fontWeight: 700,
+                      fontSize: '11.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ChefHat size={14} />
+                    <span>Cook</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRole('RIDER')}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: '10px',
+                      border: role === 'RIDER' ? '2px solid #D9480F' : '1.5px solid #EAE3D9',
+                      background: role === 'RIDER' ? '#FFF4E6' : '#FFFFFF',
+                      color: role === 'RIDER' ? '#D9480F' : '#57534E',
+                      fontWeight: 700,
+                      fontSize: '11.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Bike size={14} />
+                    <span>Rider</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setRole('ADMIN')}
+                    style={{
+                      padding: '8px 4px',
+                      borderRadius: '10px',
+                      border: role === 'ADMIN' ? '2px solid #4F46E5' : '1.5px solid #EAE3D9',
+                      background: role === 'ADMIN' ? '#EEF2FF' : '#FFFFFF',
+                      color: role === 'ADMIN' ? '#4F46E5' : '#57534E',
+                      fontWeight: 700,
+                      fontSize: '11.5px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <ShieldCheck size={14} />
+                    <span>Admin</span>
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#1C1917', marginBottom: '6px' }}>
                   Email Address or Mobile Number
@@ -248,7 +344,7 @@ export const AuthModal = () => {
                     type="text"
                     value={loginIdentifier}
                     onChange={e => setLoginIdentifier(e.target.value)}
-                    placeholder="e.g. customer@homefeast.test or 98290 20001"
+                    placeholder={role === 'PROVIDER' ? 'e.g. manisha@gmail.com' : role === 'RIDER' ? 'e.g. raju@gmail.com' : 'e.g. customer@homefeast.test or 98290 20001'}
                     required
                     style={{
                       width: '100%',

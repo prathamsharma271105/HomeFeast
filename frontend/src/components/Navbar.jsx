@@ -563,129 +563,161 @@ export const Navbar = ({ activePage, setActivePage }) => {
                     padding: '8px'
                   }}
                 >
-                  {/* User info card & Multi-Role Switcher */}
-                  <div style={{ padding: '12px', background: '#FAF8F5', borderRadius: '14px', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#1C1917' }}>{user?.name}</div>
-                    <div style={{ fontSize: '11px', color: '#78716C', marginBottom: '8px' }}>{user?.email}</div>
-                    
-                    {/* Quick Active Role Switcher Chips */}
-                    <div style={{ display: 'flex', gap: '4px', background: '#F1ECE4', padding: '3px', borderRadius: '10px' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchUserRole('CUSTOMER');
-                          addToast('Switched to Customer view 🍲', 'info');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '4px 6px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: role === 'CUSTOMER' ? '#FFFFFF' : 'transparent',
-                          color: role === 'CUSTOMER' ? '#E8590C' : '#78716C',
-                          fontWeight: 800,
-                          fontSize: '10.5px',
-                          cursor: 'pointer',
-                          boxShadow: role === 'CUSTOMER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                      >
-                        Customer
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchUserRole('PROVIDER');
-                          addToast('Switched to Home Cook role 👩‍🍳', 'success');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '4px 6px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: role === 'PROVIDER' ? '#FFFFFF' : 'transparent',
-                          color: role === 'PROVIDER' ? '#2B8A3E' : '#78716C',
-                          fontWeight: 800,
-                          fontSize: '10.5px',
-                          cursor: 'pointer',
-                          boxShadow: role === 'PROVIDER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                      >
-                        Cook
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchUserRole('RIDER');
-                          addToast('Switched to Rider Hub role 🚴', 'success');
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: '4px 6px',
-                          borderRadius: '8px',
-                          border: 'none',
-                          background: role === 'RIDER' ? '#FFFFFF' : 'transparent',
-                          color: role === 'RIDER' ? '#D9480F' : '#78716C',
-                          fontWeight: 800,
-                          fontSize: '10.5px',
-                          cursor: 'pointer',
-                          boxShadow: role === 'RIDER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                      >
-                        Rider
-                      </button>
+                  {/* User info card with Registered Role Badge */}
+                  <div style={{ padding: '14px', background: '#FAF8F5', borderRadius: '16px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#1C1917' }}>{user?.name}</div>
+                    <div style={{ fontSize: '11.5px', color: '#78716C', marginBottom: '6px' }}>{user?.email}</div>
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        background: role === 'ADMIN' ? '#EEF2FF' : role === 'PROVIDER' ? '#EBFBEE' : role === 'RIDER' ? '#FFF4E6' : '#FAF5FF',
+                        color: role === 'ADMIN' ? '#4F46E5' : role === 'PROVIDER' ? '#2B8A3E' : role === 'RIDER' ? '#D9480F' : '#9333EA',
+                        padding: '3px 10px',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {role === 'PROVIDER' ? '👩‍🍳 Home Cook Partner' : role === 'RIDER' ? '🚴 Delivery Rider' : role === 'ADMIN' ? '🛡️ Platform Admin' : '🍲 Customer Account'}
                     </div>
                   </div>
 
-                  {/* Navigation Links to All Portals */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 0' }}>
+                  {/* Navigation Links strictly based on registered role */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', padding: '4px 0' }}>
+                    {/* 1. Customer Dashboard (always shown for all accounts) */}
                     <button
                       onClick={() => {
                         setActivePage('my-pass');
                         setIsProfileMenuOpen(false);
                       }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#1C1917', cursor: 'pointer', textAlign: 'left' }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: 'none',
+                        background: activePage === 'my-pass' ? '#FFF4E6' : 'none',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#1C1917',
+                        cursor: 'pointer',
+                        textAlign: 'left'
+                      }}
                     >
                       <Calendar size={16} color="#E8590C" />
                       <span>Customer Dashboard & Passes</span>
                     </button>
-                    <button
-                      onClick={() => {
-                        if (role !== 'PROVIDER' && role !== 'ADMIN') {
-                          switchUserRole('PROVIDER');
-                        }
-                        setActivePage('provider-portal');
-                        setIsProfileMenuOpen(false);
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#2B8A3E', cursor: 'pointer', textAlign: 'left' }}
-                    >
-                      <ChefHat size={16} color="#2B8A3E" />
-                      <span>Home Cook / Kitchen Portal</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (role !== 'RIDER' && role !== 'ADMIN') {
-                          switchUserRole('RIDER');
-                        }
-                        setActivePage('rider-portal');
-                        setIsProfileMenuOpen(false);
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#D9480F', cursor: 'pointer', textAlign: 'left' }}
-                    >
-                      <Bike size={16} color="#D9480F" />
-                      <span>Rider Fleet & Delivery Portal</span>
-                    </button>
+
+                    {/* 2. Home Cook Portal (ONLY for Cook/Provider or Admin) */}
+                    {(role === 'PROVIDER' || role === 'ADMIN') && (
+                      <button
+                        onClick={() => {
+                          setActivePage('provider-portal');
+                          setIsProfileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: 'none',
+                          background: activePage === 'provider-portal' ? '#EBFBEE' : 'none',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#2B8A3E',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <ChefHat size={16} color="#2B8A3E" />
+                        <span>Home Cook / Kitchen Portal</span>
+                      </button>
+                    )}
+
+                    {/* 3. Rider Portal (ONLY for Rider or Admin) */}
+                    {(role === 'RIDER' || role === 'ADMIN') && (
+                      <button
+                        onClick={() => {
+                          setActivePage('rider-portal');
+                          setIsProfileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: 'none',
+                          background: activePage === 'rider-portal' ? '#FFF4E6' : 'none',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#D9480F',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
+                      >
+                        <Bike size={16} color="#D9480F" />
+                        <span>Rider Fleet & Delivery Portal</span>
+                      </button>
+                    )}
+
+                    {/* 4. Admin Governance (ONLY for Admin) */}
                     {role === 'ADMIN' && (
                       <button
-                        onClick={() => { setActivePage('admin'); setIsProfileMenuOpen(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#4F46E5', cursor: 'pointer', textAlign: 'left' }}
+                        onClick={() => {
+                          setActivePage('admin');
+                          setIsProfileMenuOpen(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: 'none',
+                          background: activePage === 'admin' ? '#EEF2FF' : 'none',
+                          borderRadius: '10px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#4F46E5',
+                          cursor: 'pointer',
+                          textAlign: 'left'
+                        }}
                       >
                         <ShieldCheck size={16} color="#4F46E5" />
                         <span>Admin Platform Governance</span>
                       </button>
                     )}
+
                     <button
-                      onClick={() => { logoutUser(); setIsProfileMenuOpen(false); }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#DC2626', cursor: 'pointer', textAlign: 'left' }}
+                      onClick={() => {
+                        logoutUser();
+                        setIsProfileMenuOpen(false);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: 'none',
+                        background: 'none',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#DC2626',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        marginTop: '4px'
+                      }}
                     >
                       <LogOut size={16} color="#DC2626" />
                       <span>Log Out</span>

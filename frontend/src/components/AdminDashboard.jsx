@@ -360,6 +360,20 @@ export const AdminDashboard = ({ onNavigatePage }) => {
     }
   };
 
+  const handleResetDatabase = async () => {
+    if (!window.confirm('Reset local demo data and reload fresh platform records?')) return;
+    try {
+      localStorage.removeItem('homefeast_registered_users');
+      localStorage.removeItem('homefeast_local_subscriptions');
+      localStorage.removeItem('homefeast_local_orders');
+      localStorage.removeItem('homefeast_local_providers');
+      await loadAdminData();
+      addToast('Seed platform data re-initialized! 🔄', 'success');
+    } catch (err) {
+      addToast('Data refreshed!', 'info');
+    }
+  };
+
   useEffect(() => {
     loadAdminData();
   }, []);

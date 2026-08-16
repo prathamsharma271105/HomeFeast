@@ -9,7 +9,7 @@
     "dev": "node --watch server.js",
     "seed:mongo": "node seed/seedMongo.js",
     "db:seed": "node seed/seedMongo.js",
-    "test": "node tests/api.test.js"
+    "test": "node tests/api.test.js && node tests/rbac.test.js"
   },
   "dependencies": {
     "@libsql/client": "^0.17.4",

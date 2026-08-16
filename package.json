@@ -1,0 +1,23 @@
+{
+  "name": "homefeast-tiffin-platform",
+  "version": "1.0.0",
+  "description": "HomeFeast - Homemade Tiffin & Food Service Platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "node backend/server.js",
+    "test": "npm run test:backend",
+    "test:backend": "npm run test --prefix backend",
+    "seed:mongo": "npm run seed:mongo --prefix backend",
+    "test:e2e": "echo Playwright testing is currently disabled."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  },
+  "author": "HomeFeast Team",
+  "license": "ISC"
+}

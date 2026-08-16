@@ -31,11 +31,19 @@ export const CheckoutModal = () => {
 
   const [paymentMethod, setPaymentMethod] = useState('UPI'); // 'UPI' | 'CARD' | 'COD'
   const [selectedUpiApp, setSelectedUpiApp] = useState(UPI_APPS[0]);
-  const [address, setAddress] = useState(user.address);
-  const [phone, setPhone] = useState(user.phone);
-  const [customerName, setCustomerName] = useState(user.name);
+  const [address, setAddress] = useState(user?.address || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [customerName, setCustomerName] = useState(user?.name || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCopiedVpa, setIsCopiedVpa] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      if (user.address) setAddress(user.address);
+      if (user.phone) setPhone(user.phone);
+      if (user.name) setCustomerName(user.name);
+    }
+  }, [user]);
 
   // 5-minute countdown timer for UPI QR
   const [timeLeft, setTimeLeft] = useState(300);

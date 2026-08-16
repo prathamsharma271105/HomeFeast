@@ -77,7 +77,7 @@ export const Navbar = ({ activePage, setActivePage }) => {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const isGuest = !user || user.id === 'guest';
+  const isGuest = !user || !user.id || user.id === 'guest';
   const role = (user?.role || 'CUSTOMER').toUpperCase();
 
   return (
@@ -694,3 +694,4 @@ export const Navbar = ({ activePage, setActivePage }) => {
     </header>
   );
 };
+

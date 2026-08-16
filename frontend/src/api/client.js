@@ -219,6 +219,49 @@ export const api = {
     );
 
     if (matched) {
+      if (role) {
+        matched.role = role.toUpperCase();
+      }
+      if (matched.role === 'PROVIDER') {
+        if (!matched.providerProfile) {
+          matched.providerProfile = {
+            id: `prov_${matched.id}`,
+            userId: matched.id,
+            businessName: `${matched.name}'s Kitchen`,
+            ownerName: matched.name,
+            email: matched.email,
+            phone: matched.phone,
+            city: matched.city || 'jaipur',
+            area: matched.area || 'Malviya Nagar',
+            address: matched.address || `${matched.area || 'Malviya Nagar'}, ${matched.city || 'jaipur'}`,
+            cuisines: ['North Indian', 'Homemade', 'Rajasthani'],
+            approvalStatus: 'APPROVED',
+            rating: 5.0,
+            totalReviews: 0,
+            startingPrice: 99,
+            fssaiNumber: '10023011004821',
+            hygieneScore: '99.0%'
+          };
+        }
+        saveLocalProvider(matched.providerProfile);
+      }
+      if (matched.role === 'RIDER') {
+        if (!matched.riderProfile) {
+          matched.riderProfile = {
+            id: `rider_${matched.id}`,
+            userId: matched.id,
+            name: matched.name,
+            phone: matched.phone,
+            city: matched.city || 'jaipur',
+            vehicleType: 'EV Scooter (Eco Delivery)',
+            vehicleNumber: 'RJ 14 EV 4022',
+            status: 'ONLINE',
+            rating: 4.95
+          };
+        }
+      }
+
+      saveLocalUser(matched, password);
       const token = `token_${matched.id}_${Date.now()}`;
       localStorage.setItem('homefeast_token', token);
       localStorage.setItem('homefeast_current_user', JSON.stringify(matched));
@@ -251,6 +294,42 @@ export const api = {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+
+      if (userRole === 'PROVIDER') {
+        newAutoUser.providerProfile = {
+          id: `prov_${newAutoUser.id}`,
+          userId: newAutoUser.id,
+          businessName: `${newAutoUser.name}'s Kitchen`,
+          ownerName: newAutoUser.name,
+          email: newAutoUser.email,
+          phone: newAutoUser.phone,
+          city: 'jaipur',
+          area: 'Malviya Nagar',
+          address: 'Malviya Nagar, Jaipur',
+          cuisines: ['North Indian', 'Homemade', 'Rajasthani'],
+          approvalStatus: 'APPROVED',
+          rating: 5.0,
+          totalReviews: 0,
+          startingPrice: 99,
+          fssaiNumber: '10023011004821',
+          hygieneScore: '99.0%'
+        };
+        saveLocalProvider(newAutoUser.providerProfile);
+      }
+
+      if (userRole === 'RIDER') {
+        newAutoUser.riderProfile = {
+          id: `rider_${newAutoUser.id}`,
+          userId: newAutoUser.id,
+          name: newAutoUser.name,
+          phone: newAutoUser.phone,
+          city: 'jaipur',
+          vehicleType: 'EV Scooter (Eco Delivery)',
+          vehicleNumber: 'RJ 14 EV 4022',
+          status: 'ONLINE',
+          rating: 4.95
+        };
+      }
 
       saveLocalUser(newAutoUser, password);
       const token = `token_${newAutoUser.id}_${Date.now()}`;

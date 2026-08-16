@@ -226,29 +226,31 @@ export const Navbar = ({ activePage, setActivePage }) => {
               <span>Meal Plans</span>
             </button>
 
-            {/* Role specific quick tabs */}
-            <button
-              onClick={() => setActivePage('my-pass')}
-              data-testid="nav-customer-hub"
-              style={{
-                padding: '8px 14px',
-                borderRadius: '9999px',
-                border: 'none',
-                background: activePage === 'my-pass' ? '#FFF4E6' : 'transparent',
-                color: activePage === 'my-pass' ? '#E8590C' : '#57534E',
-                fontWeight: 700,
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Calendar size={15} />
-              <span>Customer Hub</span>
-            </button>
+            {/* Role specific quick tabs (Only for logged-in users) */}
+            {!isGuest && role === 'CUSTOMER' && (
+              <button
+                onClick={() => setActivePage('my-pass')}
+                data-testid="nav-customer-hub"
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '9999px',
+                  border: 'none',
+                  background: activePage === 'my-pass' ? '#FFF4E6' : 'transparent',
+                  color: activePage === 'my-pass' ? '#E8590C' : '#57534E',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Calendar size={15} />
+                <span>My Passes & Orders</span>
+              </button>
+            )}
 
-            {(role === 'PROVIDER' || role === 'ADMIN') && (
+            {!isGuest && role === 'PROVIDER' && (
               <button
                 onClick={() => setActivePage('provider-portal')}
                 data-testid="nav-cook-portal"
@@ -271,7 +273,7 @@ export const Navbar = ({ activePage, setActivePage }) => {
               </button>
             )}
 
-            {(role === 'RIDER' || role === 'ADMIN') && (
+            {!isGuest && role === 'RIDER' && (
               <button
                 onClick={() => setActivePage('rider-portal')}
                 data-testid="nav-rider-hub"
@@ -294,7 +296,7 @@ export const Navbar = ({ activePage, setActivePage }) => {
               </button>
             )}
 
-            {role === 'ADMIN' && (
+            {!isGuest && role === 'ADMIN' && (
               <button
                 onClick={() => setActivePage('admin')}
                 data-testid="nav-admin-hub"

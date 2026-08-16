@@ -10,12 +10,18 @@ router.get('/', optionalAuth, (req, res) => {
   let list = store.notifications || [];
 
   if (req.user) {
-    list = list.filter(n => n.userId === req.user.id || n.role === req.user.role || n.userId === 'all');
+    list = list.filter(n =>
+      n.userId === req.user.id ||
+      n.role === req.user.role ||
+      n.userId === 'all' ||
+      !n.userId ||
+      (req.user.role === 'ADMIN')
+    );
   }
 
   res.json({
     success: true,
-    data: list.slice(0, 20),
+    data: list.slice(0, 30),
     unreadCount: list.filter(n => !n.isRead).length
   });
 });
@@ -41,7 +47,7 @@ router.patch('/:id/read', (req, res) => {
 router.patch('/read-all', optionalAuth, (req, res) => {
   const store = db.get();
   (store.notifications || []).forEach(n => {
-    if (!req.user || n.userId === req.user.id || n.role === req.user.role) {
+    if (!req.user || n.userId === req.user.id || n.role === req.user.role || req.user.role === 'ADMIN') {
       n.isRead = true;
     }
   });
@@ -55,3 +61,4 @@ router.patch('/read-all', optionalAuth, (req, res) => {
 });
 
 export default router;
+

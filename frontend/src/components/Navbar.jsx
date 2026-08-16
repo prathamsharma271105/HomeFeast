@@ -40,7 +40,8 @@ export const Navbar = ({ activePage, setActivePage }) => {
     notifications,
     unreadNotifCount,
     markNotificationRead,
-    markAllNotificationsRead
+    markAllNotificationsRead,
+    switchUserRole
   } = useAuth();
   const { addToast } = useToast();
 
@@ -562,42 +563,117 @@ export const Navbar = ({ activePage, setActivePage }) => {
                     padding: '8px'
                   }}
                 >
-                  {/* User info card */}
+                  {/* User info card & Multi-Role Switcher */}
                   <div style={{ padding: '12px', background: '#FAF8F5', borderRadius: '14px', marginBottom: '8px' }}>
                     <div style={{ fontSize: '14px', fontWeight: 800, color: '#1C1917' }}>{user?.name}</div>
-                    <div style={{ fontSize: '11px', color: '#78716C' }}>{user?.email}</div>
-                    <div style={{ marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: role === 'ADMIN' ? '#EEF2FF' : role === 'PROVIDER' ? '#EBFBEE' : '#FFF4E6', color: role === 'ADMIN' ? '#4F46E5' : role === 'PROVIDER' ? '#2B8A3E' : '#E8590C', padding: '2px 8px', borderRadius: '8px', fontSize: '10.5px', fontWeight: 800 }}>
-                      <span>ROLE: {role}</span>
+                    <div style={{ fontSize: '11px', color: '#78716C', marginBottom: '8px' }}>{user?.email}</div>
+                    
+                    {/* Quick Active Role Switcher Chips */}
+                    <div style={{ display: 'flex', gap: '4px', background: '#F1ECE4', padding: '3px', borderRadius: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          switchUserRole('CUSTOMER');
+                          addToast('Switched to Customer view 🍲', 'info');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: role === 'CUSTOMER' ? '#FFFFFF' : 'transparent',
+                          color: role === 'CUSTOMER' ? '#E8590C' : '#78716C',
+                          fontWeight: 800,
+                          fontSize: '10.5px',
+                          cursor: 'pointer',
+                          boxShadow: role === 'CUSTOMER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
+                        }}
+                      >
+                        Customer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          switchUserRole('PROVIDER');
+                          addToast('Switched to Home Cook role 👩‍🍳', 'success');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: role === 'PROVIDER' ? '#FFFFFF' : 'transparent',
+                          color: role === 'PROVIDER' ? '#2B8A3E' : '#78716C',
+                          fontWeight: 800,
+                          fontSize: '10.5px',
+                          cursor: 'pointer',
+                          boxShadow: role === 'PROVIDER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
+                        }}
+                      >
+                        Cook
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          switchUserRole('RIDER');
+                          addToast('Switched to Rider Hub role 🚴', 'success');
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '4px 6px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: role === 'RIDER' ? '#FFFFFF' : 'transparent',
+                          color: role === 'RIDER' ? '#D9480F' : '#78716C',
+                          fontWeight: 800,
+                          fontSize: '10.5px',
+                          cursor: 'pointer',
+                          boxShadow: role === 'RIDER' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
+                        }}
+                      >
+                        Rider
+                      </button>
                     </div>
                   </div>
 
-                  {/* Navigation Links */}
+                  {/* Navigation Links to All Portals */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 0' }}>
                     <button
-                      onClick={() => { setActivePage('my-pass'); setIsProfileMenuOpen(false); }}
+                      onClick={() => {
+                        setActivePage('my-pass');
+                        setIsProfileMenuOpen(false);
+                      }}
                       style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#1C1917', cursor: 'pointer', textAlign: 'left' }}
                     >
                       <Calendar size={16} color="#E8590C" />
-                      <span>Customer Dashboard</span>
+                      <span>Customer Dashboard & Passes</span>
                     </button>
-                    {(role === 'PROVIDER' || role === 'ADMIN') && (
-                      <button
-                        onClick={() => { setActivePage('provider-portal'); setIsProfileMenuOpen(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#2B8A3E', cursor: 'pointer', textAlign: 'left' }}
-                      >
-                        <ChefHat size={16} color="#2B8A3E" />
-                        <span>Provider Management Portal</span>
-                      </button>
-                    )}
-                    {(role === 'RIDER' || role === 'ADMIN') && (
-                      <button
-                        onClick={() => { setActivePage('rider-portal'); setIsProfileMenuOpen(false); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#D9480F', cursor: 'pointer', textAlign: 'left' }}
-                      >
-                        <Bike size={16} color="#D9480F" />
-                        <span>Rider Fleet & Delivery Portal</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (role !== 'PROVIDER' && role !== 'ADMIN') {
+                          switchUserRole('PROVIDER');
+                        }
+                        setActivePage('provider-portal');
+                        setIsProfileMenuOpen(false);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#2B8A3E', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <ChefHat size={16} color="#2B8A3E" />
+                      <span>Home Cook / Kitchen Portal</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (role !== 'RIDER' && role !== 'ADMIN') {
+                          switchUserRole('RIDER');
+                        }
+                        setActivePage('rider-portal');
+                        setIsProfileMenuOpen(false);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 12px', border: 'none', background: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, color: '#D9480F', cursor: 'pointer', textAlign: 'left' }}
+                    >
+                      <Bike size={16} color="#D9480F" />
+                      <span>Rider Fleet & Delivery Portal</span>
+                    </button>
                     {role === 'ADMIN' && (
                       <button
                         onClick={() => { setActivePage('admin'); setIsProfileMenuOpen(false); }}

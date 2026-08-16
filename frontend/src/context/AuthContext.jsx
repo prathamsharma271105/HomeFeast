@@ -5,32 +5,8 @@ import { geoLocator } from '../utils/geoLocator';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  // Current active user
-  const [user, setUser] = useState(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('homefeast_token') : null;
-    if (!token) {
-      return {
-        id: 'guest',
-        name: 'Guest Foodie',
-        email: '',
-        phone: '',
-        city: 'jaipur',
-        area: 'Malviya Nagar',
-        address: '',
-        role: 'CUSTOMER'
-      };
-    }
-    return {
-      id: 'usr_customer_1',
-      name: 'Aarav Sharma',
-      email: 'customer@homefeast.test',
-      phone: '+91 98290 20001',
-      city: 'jaipur',
-      area: 'Malviya Nagar',
-      address: 'Flat 304, Royal Palms, Malviya Nagar Sector 3, Jaipur',
-      role: 'CUSTOMER'
-    };
-  });
+  // Current active user (null when unauthenticated / guest)
+  const [user, setUser] = useState(null);
 
   // Active City and Location State
   const [selectedCity, setSelectedCity] = useState(() => {
@@ -69,11 +45,17 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('homefeast_token');
       if (token) {
         const profile = await api.getProfile();
-        if (profile) setUser(profile);
+        if (profile) {
+          setUser(profile);
+          fetchSubscription();
+          fetchNotifications();
+        } else {
+          localStorage.removeItem('homefeast_token');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-
-      fetchSubscription();
-      fetchNotifications();
     }
     init();
   }, []);
@@ -131,17 +113,11 @@ export const AuthProvider = ({ children }) => {
 
   const logoutUser = async () => {
     await api.logout();
-    setUser({
-      id: 'guest',
-      name: 'Guest Foodie',
-      email: '',
-      phone: '',
-      city: selectedCity,
-      area: selectedLocality,
-      address: '',
-      role: 'CUSTOMER'
-    });
+    localStorage.removeItem('homefeast_token');
+    setUser(null);
     setActiveSubscription(null);
+    setNotifications([]);
+    setUnreadNotifCount(0);
   };
 
   // Quick 1-Click Role Switcher for instant demo testing

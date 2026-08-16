@@ -670,6 +670,54 @@ export const api = {
     }
   },
 
+  async getAdminSubscriptions(params = {}) {
+    try {
+      const qs = new URLSearchParams(params);
+      const res = await fetch(`${API_BASE}/admin/subscriptions?${qs.toString()}`, { headers: getHeaders() });
+      const data = await res.json();
+      return data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  async getAdminOrders(params = {}) {
+    try {
+      const qs = new URLSearchParams(params);
+      const res = await fetch(`${API_BASE}/admin/orders?${qs.toString()}`, { headers: getHeaders() });
+      const data = await res.json();
+      return data.data || [];
+    } catch (err) {
+      return [];
+    }
+  },
+
+  async createAdminUser(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/users`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err) {
+      return { success: false, message: 'Error creating user account.' };
+    }
+  },
+
+  async createAdminProvider(payload) {
+    try {
+      const res = await fetch(`${API_BASE}/admin/providers`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (err) {
+      return { success: false, message: 'Error creating kitchen partner.' };
+    }
+  },
+
   async toggleUserStatus(id, status) {
     try {
       const res = await fetch(`${API_BASE}/admin/users/${id}/status`, {

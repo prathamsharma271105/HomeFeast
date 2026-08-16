@@ -31,7 +31,6 @@ export const Navbar = ({ activePage, setActivePage }) => {
   const {
     user,
     logoutUser,
-    switchRole,
     selectedCity,
     selectedLocality,
     activeSubscription,
@@ -571,39 +570,6 @@ export const Navbar = ({ activePage, setActivePage }) => {
                     </div>
                   </div>
 
-                  {/* Fast 1-Click Role Switcher */}
-                  <div style={{ padding: '6px 8px 10px 8px', borderBottom: '1px solid #EAE3D9' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                      Switch Active Role (Demo):
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
-                      <button
-                        onClick={() => { switchRole('CUSTOMER'); setIsProfileMenuOpen(false); }}
-                        style={{ padding: '5px 2px', borderRadius: '8px', border: role === 'CUSTOMER' ? '1.5px solid #E8590C' : '1px solid #EAE3D9', background: role === 'CUSTOMER' ? '#FFF4E6' : '#FFFFFF', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Foodie
-                      </button>
-                      <button
-                        onClick={() => { switchRole('PROVIDER'); setIsProfileMenuOpen(false); }}
-                        style={{ padding: '5px 2px', borderRadius: '8px', border: role === 'PROVIDER' ? '1.5px solid #2B8A3E' : '1px solid #EAE3D9', background: role === 'PROVIDER' ? '#EBFBEE' : '#FFFFFF', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Cook
-                      </button>
-                      <button
-                        onClick={() => { switchRole('RIDER'); setIsProfileMenuOpen(false); }}
-                        style={{ padding: '5px 2px', borderRadius: '8px', border: role === 'RIDER' ? '1.5px solid #D9480F' : '1px solid #EAE3D9', background: role === 'RIDER' ? '#FFF4E6' : '#FFFFFF', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Rider
-                      </button>
-                      <button
-                        onClick={() => { switchRole('ADMIN'); setIsProfileMenuOpen(false); }}
-                        style={{ padding: '5px 2px', borderRadius: '8px', border: role === 'ADMIN' ? '1.5px solid #4F46E5' : '1px solid #EAE3D9', background: role === 'ADMIN' ? '#EEF2FF' : '#FFFFFF', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}
-                      >
-                        Admin
-                      </button>
-                    </div>
-                  </div>
-
                   {/* Navigation Links */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px 0' }}>
                     <button
@@ -695,3 +661,4 @@ export const Navbar = ({ activePage, setActivePage }) => {
   );
 };
 
+                      

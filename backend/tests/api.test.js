@@ -106,6 +106,40 @@ async function runTests() {
     failed++;
   }
 
+  // Test 6: Admin Dashboard Endpoint
+  try {
+    const res = await get('/api/admin/dashboard');
+    if (res.status === 200 && res.data.success && res.data.data.stats) {
+      console.log(`✅ Admin Dashboard (/api/admin/dashboard) passed -> Users: ${res.data.data.stats.totalUsers}, Kitchens: ${res.data.data.stats.totalProviders}`);
+      passed++;
+    } else {
+      console.error('❌ Admin Dashboard failed:', res);
+      failed++;
+    }
+  } catch (err) {
+    console.error('❌ Admin Dashboard error:', err.message);
+    failed++;
+  }
+
+  // Test 7: Admin Subscriptions & Orders Endpoints
+  try {
+    const [subRes, ordRes, uRes] = await Promise.all([
+      get('/api/admin/subscriptions'),
+      get('/api/admin/orders'),
+      get('/api/admin/users')
+    ]);
+    if (subRes.status === 200 && ordRes.status === 200 && uRes.status === 200) {
+      console.log(`✅ Admin Platform Collections (/api/admin/subscriptions, /orders, /users) passed -> Subs: ${subRes.data.data.length}, Orders: ${ordRes.data.data.length}, Users: ${uRes.data.data.length}`);
+      passed++;
+    } else {
+      console.error('❌ Admin Platform Collections failed');
+      failed++;
+    }
+  } catch (err) {
+    console.error('❌ Admin Platform Collections error:', err.message);
+    failed++;
+  }
+
   console.log(`\n========================================`);
   console.log(`Test Results: ${passed} Passed, ${failed} Failed`);
   console.log(`========================================\n`);

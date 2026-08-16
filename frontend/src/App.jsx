@@ -27,70 +27,36 @@ import { ReviewModal } from './components/ReviewModal';
 import { ComplaintModal } from './components/ComplaintModal';
 import { RiderDashboardModal } from './components/RiderDashboardModal';
 
-import { useAuth } from './context/AuthContext';
-
 function RoleAccessBarrier({ requiredRole, requiredTitle, requiredIcon, onGoHome }) {
-  const { user, setIsAuthModalOpen, setAuthModalTab, switchUserRole } = useAuth();
-  const currentRole = user?.role || 'GUEST';
-
-  const handleActivateRole = () => {
-    switchUserRole(requiredRole);
-  };
+  const { user, setIsAuthModalOpen, setAuthModalTab } = useAuth();
+  const currentRole = (user?.role || 'GUEST').toUpperCase();
 
   return (
     <div data-testid="role-access-barrier" style={{ maxWidth: '640px', margin: '60px auto', padding: '36px 24px', textAlign: 'center', background: '#FFFFFF', borderRadius: '24px', border: '1.5px solid #EAE3D9', boxShadow: '0 20px 40px -15px rgba(0,0,0,0.07)' }}>
-      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: requiredRole === 'PROVIDER' ? '#EBFBEE' : requiredRole === 'RIDER' ? '#FFF4E6' : '#FEF2F2', color: requiredRole === 'PROVIDER' ? '#2B8A3E' : requiredRole === 'RIDER' ? '#D9480F' : '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 16px' }}>
-        {requiredIcon || '🛡️'}
+      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#FEF2F2', color: '#DC2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', margin: '0 auto 16px' }}>
+        🔒
       </div>
-      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FAF5FF', color: '#7E22CE', padding: '4px 12px', borderRadius: '12px', fontSize: '11.5px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
-        Current Account: {user?.name || 'Guest'} • Role: {currentRole}
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#FEE2E2', color: '#B91C1C', padding: '4px 12px', borderRadius: '12px', fontSize: '11.5px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '8px' }}>
+        Access Restricted • Current Role: {currentRole}
       </div>
       <h2 style={{ fontSize: '22px', fontWeight: 900, color: '#1C1917', marginBottom: '8px' }}>
         {requiredTitle}
       </h2>
       <p style={{ fontSize: '14px', color: '#78716C', maxWidth: '480px', margin: '0 auto 24px', lineHeight: 1.5 }}>
-        {user
-          ? `You are signed in as ${user.name}. Click below to enter your verified ${requiredRole} portal.`
-          : `This management portal requires verified ${requiredRole} account credentials. Please sign in or register to proceed.`}
+        This management portal requires verified <strong>{requiredRole}</strong> account credentials. Direct navigation without {requiredRole} authorization is blocked by Platform Access Control.
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '360px', margin: '0 auto' }}>
-        {user ? (
-          <button
-            className="btn btn-primary"
-            onClick={handleActivateRole}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '13px 20px',
-              fontWeight: 800,
-              borderRadius: '12px',
-              background: requiredRole === 'PROVIDER'
-                ? 'linear-gradient(135deg, #2B8A3E 0%, #10B981 100%)'
-                : requiredRole === 'RIDER'
-                ? 'linear-gradient(135deg, #D9480F 0%, #E8590C 100%)'
-                : 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
-              color: '#FFFFFF',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <span>✨ Open {requiredRole} Portal as {user.name.split(' ')[0]}</span>
-          </button>
-        ) : (
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setAuthModalTab('login');
-              setIsAuthModalOpen(true);
-            }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontWeight: 700, borderRadius: '12px' }}
-          >
-            <span>🔐 Sign In with {requiredRole} Credentials</span>
-          </button>
-        )}
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setAuthModalTab('login');
+            setIsAuthModalOpen(true);
+          }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 20px', fontWeight: 700, borderRadius: '12px' }}
+        >
+          <span>🔐 Sign In with {requiredRole} Credentials</span>
+        </button>
         <button
           className="btn btn-secondary"
           data-testid="barrier-go-home-button"

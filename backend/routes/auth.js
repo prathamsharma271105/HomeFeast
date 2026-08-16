@@ -285,7 +285,7 @@ router.post('/register', (req, res) => {
 
 // PUT /api/auth/profile
 router.put('/profile', optionalAuth, (req, res) => {
-  const { id, email, name, phone, city, area, address } = req.body;
+  const { id, email, name, phone, city, area, address, businessName, description, fssaiNumber, cuisines, vehicleType, vehicleNumber } = req.body;
   const store = db.get();
   let user = null;
 
@@ -302,13 +302,14 @@ router.put('/profile', optionalAuth, (req, res) => {
   }
 
   if (!user) {
-    user = store.users.find(u => u.role === 'CUSTOMER') || store.users[0];
+    user = store.users.find(u => u.role === 'ADMIN') || store.users.find(u => u.role === 'CUSTOMER') || store.users[0];
   }
 
   if (!user) {
     return res.status(404).json({ success: false, message: 'User account not found.' });
   }
 
+  const oldName = user.name;
   if (name) user.name = name.trim();
   if (phone) user.phone = phone.trim();
   if (city) user.city = city.toLowerCase();
@@ -316,27 +317,79 @@ router.put('/profile', optionalAuth, (req, res) => {
   if (address) user.address = address.trim();
   user.updatedAt = new Date().toISOString();
 
+  let providerProfile = null;
   // If user is provider, update matching provider details
   if (user.role === 'PROVIDER') {
-    const prov = store.providers.find(p => p.userId === user.id || p.ownerName === user.name);
+    const prov = store.providers.find(p => p.userId === user.id || p.email === user.email || p.phone === user.phone || p.ownerName === oldName);
     if (prov) {
       if (name) prov.ownerName = name.trim();
+      if (businessName) prov.businessName = businessName.trim();
       if (phone) prov.phone = phone.trim();
       if (city) prov.city = city.toLowerCase();
       if (area) prov.area = area.trim();
       if (address) prov.address = address.trim();
+      if (description) prov.description = description.trim();
+      if (fssaiNumber) prov.fssaiNumber = fssaiNumber.trim();
+      if (cuisines) prov.cuisines = Array.isArray(cuisines) ? cuisines : [cuisines];
       prov.updatedAt = new Date().toISOString();
+      providerProfile = prov;
+
+      // Update providerName in dishes and plans
+      (store.menu || []).forEach(dish => {
+        if (dish.providerId === prov.id) {
+          dish.providerName = prov.businessName;
+        }
+      });
+      (store.plans || []).forEach(plan => {
+        if (plan.providerId === prov.id) {
+          plan.providerName = prov.businessName;
+        }
+      });
     }
+  }
+
+  // If user is rider, update matching rider details
+  if (user.role === 'RIDER') {
+    if (!Array.isArray(store.riders)) store.riders = [];
+    const rider = store.riders.find(r => r.userId === user.id || r.email === user.email || r.phone === user.phone || r.name === oldName);
+    if (rider) {
+      if (name) rider.name = name.trim();
+      if (phone) rider.phone = phone.trim();
+      if (city) rider.city = city.toLowerCase();
+      if (area) rider.area = area.trim();
+      if (vehicleType) rider.vehicleType = vehicleType.trim();
+      if (vehicleNumber) rider.vehicleNumber = vehicleNumber.trim();
+      rider.updatedAt = new Date().toISOString();
+    }
+  }
+
+  // If customer, update orders and reviews customerName for consistency
+  if (user.role === 'CUSTOMER' && name) {
+    (store.orders || []).forEach(order => {
+      if (order.customerId === user.id || (oldName && order.customerName === oldName)) {
+        order.customerName = user.name;
+        if (phone) order.customerPhone = user.phone;
+      }
+    });
+    (store.reviews || []).forEach(rev => {
+      if (rev.customerId === user.id || (oldName && rev.customerName === oldName)) {
+        rev.customerName = user.name;
+      }
+    });
   }
 
   db.save(store);
 
+  const token = generateToken(user);
+
   res.json({
     success: true,
-    message: 'Profile updated successfully!',
+    message: 'Profile updated successfully! ✨',
+    token,
     data: {
       ...user,
-      passwordHash: undefined
+      passwordHash: undefined,
+      providerProfile
     }
   });
 });
